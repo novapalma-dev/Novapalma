@@ -1,6 +1,7 @@
 import { prisma } from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
 import * as auditService from './audit.service.js';
 
 export const login = async (correo, password, ipAddress, userAgent) => {
@@ -19,11 +20,11 @@ export const login = async (correo, password, ipAddress, userAgent) => {
     throw new Error('Credenciales inválidas');
   }
 
-  // 3. Generar JWT
+  // 3. Generar JWT con algoritmo explícito y jwtid único para evitar colisiones de token
   const token = jwt.sign(
     { id: user.id, rol: user.rol },
     process.env.JWT_SECRET,
-    { expiresIn: '8h' }
+    { expiresIn: '8h', algorithm: 'HS256', jwtid: crypto.randomUUID() }
   );
 
   // 4. Almacenar sesión activa en refresh_tokens
@@ -67,29 +68,39 @@ export const logout = async (token, ipAddress, userAgent) => {
 
   let decoded;
   try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Verificar firma con algoritmo explícito. Se ignora expiración para permitir
+    // cerrar sesión y revocar tokens recién vencidos sin error.
+    decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ['HS256'],
+      ignoreExpiration: true
+    });
   } catch (err) {
-    // Si el token expiró o es inválido, aún intentamos decodificarlo sin firmar para auditar el logout
-    decoded = jwt.decode(token);
+    // Si la firma es ilegítima o fue adulterada, se rechaza y no se genera registro de auditoría falso
+    console.warn('⚠️ Intento de logout con token adulterado o firma inválida');
+    return;
   }
 
   if (decoded && decoded.id) {
-    // Revocar el token (marcarlo como revoked) en la base de datos
-    await prisma.refreshToken.updateMany({
-      where: { token, userId: decoded.id },
-      data: { revoked: true }
-    });
+    // Ejecución atómica de revocación y bitácora en una misma transacción ACID
+    await prisma.$transaction(async (tx) => {
+      const updateResult = await tx.refreshToken.updateMany({
+        where: { token, userId: decoded.id, revoked: false },
+        data: { revoked: true }
+      });
 
-    // Registrar auditoría forense de LOGOUT
-    await auditService.logAudit({
-      userId: decoded.id,
-      action: 'LOGOUT',
-      entity: 'User',
-      entityId: decoded.id,
-      ipAddress,
-      userAgent
-    });
+      // Solo registrar auditoría si existía un registro activo a revocar
+      if (updateResult.count > 0) {
+        await auditService.logAudit({
+          userId: decoded.id,
+          action: 'LOGOUT',
+          entity: 'User',
+          entityId: decoded.id,
+          ipAddress,
+          userAgent
+        }, tx);
 
-    console.log(`🛡️ Auditoría Forense: LOGOUT verificado para el usuario ${decoded.id}`);
+        console.log(`🛡️ Auditoría Forense: LOGOUT verificado para el usuario ${decoded.id}`);
+      }
+    });
   }
 };
