@@ -242,11 +242,13 @@ export const getTripById = async (id) => {
  */
 export const updateTrip = async (id, updateData, userId) => {
   return await prisma.$transaction(async (tx) => {
-    // 1. Obtener viaje actual para verificar su existencia y construir el snapshot del log de auditoría
-    const oldTrip = await tx.trip.findUnique({ 
-      where: { id, deletedAt: null } 
+    // 1. Bloqueo exclusivo de fila (FOR UPDATE) para prevenir lost updates y condiciones de carrera concurrentes
+    const [locked] = await tx.$queryRaw`SELECT id FROM trips WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Viaje no encontrado o ya ha sido eliminado');
+
+    const oldTrip = await tx.trip.findUniqueOrThrow({ 
+      where: { id } 
     });
-    if (!oldTrip) throw new Error('Viaje no encontrado o ya ha sido eliminado');
 
     // Clonar los datos recibidos y adjuntar el ID de auditoría del usuario que muta el recurso
     const dataToUpdate = { ...updateData };
@@ -296,9 +298,11 @@ export const updateTrip = async (id, updateData, userId) => {
  */
 export const deleteTrip = async (id, userId) => {
   return await prisma.$transaction(async (tx) => {
-    // 1. Buscar existencia previa
-    const oldTrip = await tx.trip.findUnique({ where: { id } });
-    if (!oldTrip) throw new Error('Viaje no encontrado');
+    // 1. Bloqueo exclusivo de fila (FOR UPDATE) asegurando que el viaje exista y no haya sido eliminado previamente
+    const [locked] = await tx.$queryRaw`SELECT id FROM trips WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Viaje no encontrado o ya ha sido eliminado');
+
+    const oldTrip = await tx.trip.findUniqueOrThrow({ where: { id } });
 
     // 2. Aplicar actualización para setear la marca de borrado y auditoría del autor
     const deletedTrip = await tx.trip.update({

@@ -83,9 +83,10 @@ export const getDriverById = async (id) => {
  */
 export const updateDriver = async (id, updateData, userId = null) => {
   return await prisma.$transaction(async (tx) => {
-    const oldDriver = await tx.driver.findUnique({ where: { id } });
-    
-    if (!oldDriver) throw new Error('Conductor no encontrado');
+    const [locked] = await tx.$queryRaw`SELECT id FROM drivers WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Conductor no encontrado o ya ha sido eliminado');
+
+    const oldDriver = await tx.driver.findUniqueOrThrow({ where: { id } });
 
     const updatedDriver = await tx.driver.update({
       where: { id },
@@ -111,9 +112,10 @@ export const updateDriver = async (id, updateData, userId = null) => {
  */
 export const deleteDriver = async (id, userId = null) => {
   return await prisma.$transaction(async (tx) => {
-    const oldDriver = await tx.driver.findUnique({ where: { id } });
+    const [locked] = await tx.$queryRaw`SELECT id FROM drivers WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Conductor no encontrado o ya ha sido eliminado');
 
-    if (!oldDriver) throw new Error('Conductor no encontrado');
+    const oldDriver = await tx.driver.findUniqueOrThrow({ where: { id } });
 
     const deletedDriver = await tx.driver.update({
       where: { id },

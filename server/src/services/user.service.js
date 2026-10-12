@@ -148,11 +148,19 @@ export const updateUser = async (id, updateData, adminId) => {
 
   // Transacción ACID para asegurar consistencia del estado del sistema
   return await prisma.$transaction(async (tx) => {
-    // 1. Obtener datos previos del usuario a modificar
-    const oldUser = await tx.user.findUnique({
+    // Blindaje C4: Bloquear con FOR UPDATE las filas de administradores activos si la mutación
+    // involucra desactivar o degradar roles, serializando comprobaciones de quórum de administradores.
+    if (updateData.activo === false || updateData.rol === 'OPERADOR') {
+      await tx.$queryRaw`SELECT id FROM users WHERE rol = 'ADMIN'::"Role" AND activo = true AND "deletedAt" IS NULL FOR UPDATE`;
+    }
+
+    // 1. Obtener datos previos del usuario a modificar con lock exclusivo para evitar lost updates
+    const [lockedUser] = await tx.$queryRaw`SELECT id FROM users WHERE id = ${id}::uuid FOR UPDATE`;
+    if (!lockedUser) throw new Error('Usuario no encontrado');
+
+    const oldUser = await tx.user.findUniqueOrThrow({
       where: { id }
     });
-    if (!oldUser) throw new Error('Usuario no encontrado');
 
     // Blindaje de resiliencia: Si el usuario objetivo es ADMIN y se le intenta desactivar
     // o degradar de rol, validar que exista al menos otro administrador activo para evitar
@@ -176,6 +184,14 @@ export const updateUser = async (id, updateData, adminId) => {
       where: { id },
       data: dataToUpdate
     });
+
+    // Blindaje C3: Revocar sesiones activas si se desactiva, degrada rol o cambia contraseña
+    if (updateData.activo === false || updateData.rol !== undefined || updateData.password) {
+      await tx.refreshToken.updateMany({
+        where: { userId: id, revoked: false },
+        data: { revoked: true }
+      });
+    }
 
     // 3. Registrar auditoría forense capturando el delta de los cambios
     await auditService.logAudit({

@@ -87,9 +87,10 @@ export const getVehicleById = async (id) => {
  */
 export const updateVehicle = async (id, updateData, userId = null) => {
   return await prisma.$transaction(async (tx) => {
-    const oldVehicle = await tx.vehicle.findUnique({ where: { id } });
-    
-    if (!oldVehicle) throw new Error('Vehículo no encontrado');
+    const [locked] = await tx.$queryRaw`SELECT id FROM vehicles WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Vehículo no encontrado o ya ha sido eliminado');
+
+    const oldVehicle = await tx.vehicle.findUniqueOrThrow({ where: { id } });
 
     const updatedVehicle = await tx.vehicle.update({
       where: { id },
@@ -115,9 +116,10 @@ export const updateVehicle = async (id, updateData, userId = null) => {
  */
 export const deleteVehicle = async (id, userId = null) => {
   return await prisma.$transaction(async (tx) => {
-    const oldVehicle = await tx.vehicle.findUnique({ where: { id } });
+    const [locked] = await tx.$queryRaw`SELECT id FROM vehicles WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Vehículo no encontrado o ya ha sido eliminado');
 
-    if (!oldVehicle) throw new Error('Vehículo no encontrado');
+    const oldVehicle = await tx.vehicle.findUniqueOrThrow({ where: { id } });
 
     const deletedVehicle = await tx.vehicle.update({
       where: { id },
