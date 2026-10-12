@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const tripSchema = z.object({
+export const tripSchema = z.strictObject({
   ticket: z.preprocess((val) => parseInt(val, 10), z.number().int().positive('El ticket debe ser un número entero positivo')),
   fecha: z.preprocess((arg) => {
     if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
@@ -15,11 +15,10 @@ export const tripSchema = z.object({
   usoAcpm: z.boolean().optional().default(false),
   usoFerry: z.boolean().optional().default(false),
   porcentajeConductor: z.number().nonnegative().optional().nullable(),
-  valorConductor: z.number().nonnegative().optional().nullable(),
   valorAcpm: z.number().nonnegative().optional().nullable(),
   valorFerry: z.number().nonnegative().optional().nullable(),
   driverId: z.string().uuid('ID de conductor inválido'),
   vehicleId: z.string().uuid('ID de vehículo inválido'),
 });
 
-export const updateTripSchema = tripSchema.partial();
+export const updateTripSchema = tripSchema.partial().strict();

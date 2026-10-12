@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const createUserSchema = z.object({
+export const createUserSchema = z.strictObject({
   primerNombre: z.string().min(2, 'El primer nombre debe tener al menos 2 caracteres').regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El primer nombre solo puede contener letras').max(60),
   segundoNombre: z.string().regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/, 'El segundo nombre solo puede contener letras').max(60).optional().nullable(),
   primerApellido: z.string().min(2, 'El primer apellido debe tener al menos 2 caracteres').regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El primer apellido solo puede contener letras').max(60),
@@ -16,7 +16,7 @@ export const createUserSchema = z.object({
 
 export const updateUserSchema = createUserSchema.partial().extend({
   activo: z.boolean().optional(),
-});
+}).strict();
 
 export const validateUser = (data) => {
   return createUserSchema.safeParse(data);

@@ -17,8 +17,9 @@ import { ZodError } from 'zod';
  */
 export const validate = (schema) => (req, res, next) => {
   try {
-    // Si la validación pasa, continúa al siguiente controlador
-    schema.parse(req.body);
+    // Si la validación pasa, se REEMPLAZA el body crudo por el resultado parseado
+    // (whitelist estricta + tipos transformados) para impedir mass assignment.
+    req.body = schema.parse(req.body);
     next();
   } catch (error) {
     // Interceptamos específicamente fallos de validación estructural de Zod
