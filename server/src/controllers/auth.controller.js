@@ -78,8 +78,8 @@ export const logout = async (req, res) => {
  */
 export const updateProfile = async (req, res) => {
   try {
-    // El usuario logueado req.user.id solo puede actualizar su propia cuenta
-    const user = await userService.updateUser(req.user.id, req.body, req.user.id);
+    // El usuario logueado req.user.id solo puede actualizar su propio perfil y contraseña
+    const user = await userService.updateOwnProfile(req.user.id, req.body);
     res.json({ user });
   } catch (error) {
     const { status, message } = formatError(error);

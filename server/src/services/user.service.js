@@ -204,3 +204,70 @@ export const updateUser = async (id, updateData, adminId) => {
     return userWithoutPassword;
   });
 };
+
+/**
+ * Actualiza los datos de perfil y contraseña del propio usuario autenticado (autoservicio).
+ * Permite tanto a OPERADOR como a ADMIN modificar su nombre y contraseña sin requerir privilegios de admin.
+ * Bloquea estrictamente la alteración de correo, rol, activo o deletedAt.
+ *
+ * @param {string} userId - UUID del usuario autenticado.
+ * @param {Object} profileData - Campos validados de perfil (primerNombre, segundoNombre, etc., password).
+ * @returns {Promise<Object>} Datos del usuario actualizado sin el hash de contraseña.
+ */
+export const updateOwnProfile = async (userId, profileData) => {
+  if (!userId) {
+    throw new Error('Operación denegada: Sesión no válida.');
+  }
+
+  const allowedData = {};
+  if (profileData.primerNombre !== undefined) allowedData.primerNombre = profileData.primerNombre;
+  if (profileData.segundoNombre !== undefined) allowedData.segundoNombre = profileData.segundoNombre;
+  if (profileData.primerApellido !== undefined) allowedData.primerApellido = profileData.primerApellido;
+  if (profileData.segundoApellido !== undefined) allowedData.segundoApellido = profileData.segundoApellido;
+
+  let passwordChanged = false;
+  if (profileData.password) {
+    const saltRounds = 10;
+    allowedData.password = await bcrypt.hash(profileData.password, saltRounds);
+    passwordChanged = true;
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    const oldUser = await tx.user.findFirst({
+      where: { id: userId, activo: true, deletedAt: null }
+    });
+    if (!oldUser) throw new Error('Usuario no encontrado o inactivo');
+
+    const updatedUser = await tx.user.update({
+      where: { id: userId },
+      data: allowedData
+    });
+
+    if (passwordChanged) {
+      await tx.refreshToken.updateMany({
+        where: { userId, revoked: false },
+        data: { revoked: true }
+      });
+    }
+
+    await auditService.logAudit({
+      userId,
+      action: 'UPDATE',
+      entity: 'User',
+      entityId: userId,
+      oldValues: {
+        primerNombre: oldUser.primerNombre,
+        primerApellido: oldUser.primerApellido,
+        passwordChanged: false
+      },
+      newValues: {
+        primerNombre: updatedUser.primerNombre,
+        primerApellido: updatedUser.primerApellido,
+        passwordChanged
+      }
+    }, tx);
+
+    const { password, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
+  });
+};
