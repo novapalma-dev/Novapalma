@@ -1,0 +1,3 @@
+- **Nombre:** Javier
+- **Usuario GitHub:** ByJabi
+- **Rol:** Product Owner / QA & Testing Lead
