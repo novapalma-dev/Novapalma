@@ -6,6 +6,7 @@ import tripRoutes from './trip.routes.js';
 import authRoutes from './auth.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import financeRoutes from './finance.routes.js';
+import settingsRoutes from './settings.routes.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { adminMiddleware } from '../middlewares/role.middleware.js';
 
@@ -21,5 +22,6 @@ router.use('/conductores', authMiddleware, driverRoutes);
 router.use('/viajes', authMiddleware, tripRoutes);
 router.use('/dashboard', authMiddleware, dashboardRoutes);
 router.use('/finanzas', authMiddleware, adminMiddleware, financeRoutes);
+router.use('/configuracion', authMiddleware, settingsRoutes);
 
 export default router;
