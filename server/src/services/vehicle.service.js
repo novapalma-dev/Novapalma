@@ -4,7 +4,7 @@ import * as auditService from './audit.service.js';
 /**
  * Crea un nuevo vehículo con registro de auditoría.
  */
-export const createVehicle = async (vehicleData, userId = null) => {
+export const createVehicle = async (vehicleData, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     const existingVehicle = await tx.vehicle.findUnique({
       where: { placa: vehicleData.placa.toUpperCase() }
@@ -32,7 +32,9 @@ export const createVehicle = async (vehicleData, userId = null) => {
       action: 'CREATE',
       entity: 'Vehicle',
       entityId: newVehicle.id,
-      newValues: newVehicle
+      newValues: newVehicle,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🚚 Vehículo ${newVehicle.placa} creado exitosamente. 🛡️ Auditoría registrada.`);
@@ -64,7 +66,7 @@ export const getVehicleById = async (id) => {
 /**
  * Actualiza un vehículo con registro de auditoría.
  */
-export const updateVehicle = async (id, updateData, userId = null) => {
+export const updateVehicle = async (id, updateData, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     const [locked] = await tx.$queryRaw`SELECT id, activo, "deletedAt" FROM vehicles WHERE id = ${id}::uuid FOR UPDATE`;
     if (!locked) throw new Error('Vehículo no encontrado');
@@ -99,7 +101,9 @@ export const updateVehicle = async (id, updateData, userId = null) => {
       entity: 'Vehicle',
       entityId: id,
       oldValues: oldVehicle,
-      newValues: updatedVehicle
+      newValues: updatedVehicle,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`✅ Vehículo ${updatedVehicle.placa} actualizado. 🛡️ Auditoría registrada.`);
@@ -110,7 +114,7 @@ export const updateVehicle = async (id, updateData, userId = null) => {
 /**
  * Realiza un Soft Delete del vehículo.
  */
-export const deleteVehicle = async (id, userId = null) => {
+export const deleteVehicle = async (id, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     const [locked] = await tx.$queryRaw`SELECT id FROM vehicles WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
     if (!locked) throw new Error('Vehículo no encontrado o ya ha sido eliminado');
@@ -131,7 +135,9 @@ export const deleteVehicle = async (id, userId = null) => {
       entity: 'Vehicle',
       entityId: id,
       oldValues: oldVehicle,
-      newValues: { deletedAt: deletedVehicle.deletedAt, activo: false }
+      newValues: { deletedAt: deletedVehicle.deletedAt, activo: false },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🗑️ Soft Delete aplicado al vehículo ${oldVehicle.placa}. 🛡️ Auditoría registrada.`);

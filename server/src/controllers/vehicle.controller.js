@@ -9,6 +9,11 @@ import { formatError } from '../utils/errorHandler.js';
  * Comunica los endpoints con el servicio de vehículos garantizando auditoría.
  */
 
+const getAuditMeta = (req) => ({
+  ipAddress: req.ip || req.socket?.remoteAddress || null,
+  userAgent: req.get('User-Agent') || null
+});
+
 /**
  * @route   POST /api/vehiculos
  * @desc    Registra un nuevo vehículo de fletes en el sistema
@@ -17,7 +22,7 @@ import { formatError } from '../utils/errorHandler.js';
  */
 export const create = async (req, res) => {
   try {
-    const vehicle = await vehicleService.createVehicle(req.body, req.user.id);
+    const vehicle = await vehicleService.createVehicle(req.body, req.user.id, getAuditMeta(req));
     res.status(201).json(vehicle);
   } catch (error) {
     const { status, message } = formatError(error);
@@ -65,7 +70,7 @@ export const getById = async (req, res) => {
  */
 export const update = async (req, res) => {
   try {
-    const vehicle = await vehicleService.updateVehicle(req.params.id, req.body, req.user.id);
+    const vehicle = await vehicleService.updateVehicle(req.params.id, req.body, req.user.id, getAuditMeta(req));
     res.json(vehicle);
   } catch (error) {
     const { status, message } = formatError(error);
@@ -81,7 +86,7 @@ export const update = async (req, res) => {
  */
 export const remove = async (req, res) => {
   try {
-    const vehicle = await vehicleService.deleteVehicle(req.params.id, req.user.id);
+    const vehicle = await vehicleService.deleteVehicle(req.params.id, req.user.id, getAuditMeta(req));
     res.json({ message: 'Vehículo eliminado (Soft Delete)', vehicle });
   } catch (error) {
     const { status, message } = formatError(error);

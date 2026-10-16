@@ -10,6 +10,11 @@ import { formatError } from '../utils/errorHandler.js';
  * Mantiene el principio de responsabilidad única (Single Responsibility Principle).
  */
 
+const getAuditMeta = (req) => ({
+  ipAddress: req.ip || req.socket?.remoteAddress || null,
+  userAgent: req.get('User-Agent') || null
+});
+
 /**
  * @route   POST /api/viajes
  * @desc    Registra un nuevo flete de forma atómica en el sistema
@@ -20,7 +25,7 @@ export const create = async (req, res) => {
   try {
     // Se delega al servicio pasando el body y el ID del usuario actual (req.user.id)
     // para cumplir con la trazabilidad inmutable del registro de auditoría (registradoPorId)
-    const trip = await tripService.createTrip(req.body, req.user.id);
+    const trip = await tripService.createTrip(req.body, req.user.id, getAuditMeta(req));
     res.status(201).json(trip);
   } catch (error) {
     const { status, message } = formatError(error);
@@ -67,7 +72,7 @@ export const getById = async (req, res) => {
  */
 export const update = async (req, res) => {
   try {
-    const trip = await tripService.updateTrip(req.params.id, req.body, req.user.id);
+    const trip = await tripService.updateTrip(req.params.id, req.body, req.user.id, getAuditMeta(req));
     res.json(trip);
   } catch (error) {
     const { status, message } = formatError(error);
@@ -83,7 +88,7 @@ export const update = async (req, res) => {
  */
 export const remove = async (req, res) => {
   try {
-    const trip = await tripService.deleteTrip(req.params.id, req.user.id);
+    const trip = await tripService.deleteTrip(req.params.id, req.user.id, getAuditMeta(req));
     res.json({ message: 'Viaje eliminado y vehículo liberado', trip });
   } catch (error) {
     const { status, message } = formatError(error);

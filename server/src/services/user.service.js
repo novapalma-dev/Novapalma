@@ -49,7 +49,7 @@ export const getAllUsers = async () => {
  * @returns {Promise<Object>} El usuario creado (sin el hash de contraseña).
  * @throws {Error} Si no se provee creatorId, si el creador no existe, si no es administrador o si falla el registro.
  */
-export const createUser = async (userData, creatorId = null) => {
+export const createUser = async (userData, creatorId = null, auditMeta = {}) => {
   // Regla de Trazabilidad: Se requiere identificar al actor creador obligatoriamente
   if (!creatorId) {
     throw new Error('Operación denegada: Se requiere la identificación del creador.');
@@ -92,7 +92,9 @@ export const createUser = async (userData, creatorId = null) => {
         correo: newUser.correo,
         rol: newUser.rol,
         nombreCompleto: `${newUser.primerNombre} ${newUser.primerApellido}`
-      }
+      },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🛡️ Auditoría confirmada para el usuario: ${newUser.correo}`);
@@ -110,11 +112,12 @@ export const createUser = async (userData, creatorId = null) => {
  * @param {string} id - UUID del usuario a modificar.
  * @param {Object} updateData - Nuevos datos del usuario a aplicar.
  * @param {string} adminId - UUID del administrador que realiza la actualización.
+ * @param {Object} [auditMeta] - Metadatos forenses (ipAddress, userAgent).
  * @returns {Promise<Object>} Datos del usuario actualizado (sin password hash).
  * @throws {Error} Si el actor no es ADMIN, si se intenta el auto-bloqueo del administrador activo,
  *                 o si se intenta desactivar al único administrador activo disponible.
  */
-export const updateUser = async (id, updateData, adminId) => {
+export const updateUser = async (id, updateData, adminId, auditMeta = {}) => {
   // Regla de Trazabilidad: Identificación del autor es mandatoria
   if (!adminId) {
     throw new Error('Operación denegada: Se requiere la identificación del administrador.');
@@ -213,7 +216,9 @@ export const updateUser = async (id, updateData, adminId) => {
         rol: updatedUser.rol,
         activo: updatedUser.activo,
         nombreCompleto: `${updatedUser.primerNombre} ${updatedUser.primerApellido}`
-      }
+      },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🛡️ Auditoría de actualización confirmada para el usuario: ${updatedUser.correo}`);
@@ -231,9 +236,11 @@ export const updateUser = async (id, updateData, adminId) => {
  *
  * @param {string} userId - UUID del usuario autenticado.
  * @param {Object} profileData - Campos validados de perfil (primerNombre, segundoNombre, etc., password).
+ * @param {string|null} [currentToken] - Token JWT activo de la sesión actual.
+ * @param {Object} [auditMeta] - Metadatos forenses (ipAddress, userAgent).
  * @returns {Promise<Object>} Datos del usuario actualizado sin el hash de contraseña.
  */
-export const updateOwnProfile = async (userId, profileData, currentToken = null) => {
+export const updateOwnProfile = async (userId, profileData, currentToken = null, auditMeta = {}) => {
   if (!userId) {
     throw new Error('Operación denegada: Sesión no válida.');
   }
@@ -297,7 +304,9 @@ export const updateOwnProfile = async (userId, profileData, currentToken = null)
         primerNombre: updatedUser.primerNombre,
         primerApellido: updatedUser.primerApellido,
         passwordChanged
-      }
+      },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     const { password, ...userWithoutPassword } = updatedUser;

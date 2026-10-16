@@ -135,7 +135,7 @@ const parseUpdateFields = (dataToUpdate) => {
  * @param {string} userId - ID del usuario que registra el viaje (para auditoría).
  * @returns {Promise<Object>} El viaje creado con sus relaciones.
  */
-export const createTrip = async (tripData, userId) => {
+export const createTrip = async (tripData, userId, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     // 1. Validar que el vehículo esté activo mediante helper encapsulado
     await validateActiveVehicle(tx, tripData.vehicleId);
@@ -193,13 +193,17 @@ export const createTrip = async (tripData, userId) => {
       }
     });
 
-    // 6. Registrar Auditoría del viaje creado
+    const { driver, vehicle, ...tripSnapshot } = newTrip;
+
+    // 7. Registrar Auditoría del viaje creado
     await auditService.logAudit({
       userId,
       action: 'CREATE',
       entity: 'Trip',
       entityId: newTrip.id,
-      newValues: newTrip
+      newValues: tripSnapshot,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🎫 Viaje registrado: Ticket ${newTrip.ticket}. 🛡️ Auditoría registrada.`);
@@ -264,7 +268,7 @@ export const getTripById = async (id) => {
  * @returns {Promise<Object>} El objeto viaje actualizado.
  * @throws {Error} Si el viaje no se encuentra o ya está borrado.
  */
-export const updateTrip = async (id, updateData, userId) => {
+export const updateTrip = async (id, updateData, userId, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     // 1. Bloqueo exclusivo de fila (FOR UPDATE) para prevenir lost updates y condiciones de carrera concurrentes
     const [locked] = await tx.$queryRaw`SELECT id FROM trips WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
@@ -320,14 +324,18 @@ export const updateTrip = async (id, updateData, userId) => {
       include: { driver: true, vehicle: true }
     });
 
-    // 5. Registrar la Auditoría correspondiente incluyendo el snapshot de oldValues y newValues
+    const { driver, vehicle, ...updatedTripSnapshot } = updatedTrip;
+
+    // 7. Registrar la Auditoría correspondiente incluyendo el snapshot simétrico de oldValues y newValues
     await auditService.logAudit({
       userId,
       action: 'UPDATE',
       entity: 'Trip',
       entityId: id,
       oldValues: oldTrip,
-      newValues: updatedTrip
+      newValues: updatedTripSnapshot,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`✅ Viaje ${updatedTrip.ticket} actualizado exitosamente.`);
@@ -341,9 +349,10 @@ export const updateTrip = async (id, updateData, userId) => {
  * 
  * @param {string} id - UUID del viaje a dar de baja.
  * @param {string} userId - UUID del usuario que ordena la baja del flete.
+ * @param {Object} [auditMeta] - Metadatos forenses (ipAddress, userAgent).
  * @returns {Promise<Object>} Registro del viaje con la marca temporal en deletedAt.
  */
-export const deleteTrip = async (id, userId) => {
+export const deleteTrip = async (id, userId, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     // 1. Bloqueo exclusivo de fila (FOR UPDATE) asegurando que el viaje exista y no haya sido eliminado previamente
     const [locked] = await tx.$queryRaw`SELECT id FROM trips WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
@@ -367,7 +376,9 @@ export const deleteTrip = async (id, userId) => {
       entity: 'Trip',
       entityId: id,
       oldValues: oldTrip,
-      newValues: { deletedAt: deletedTrip.deletedAt }
+      newValues: { deletedAt: deletedTrip.deletedAt },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🗑️ Viaje ${oldTrip.ticket} eliminado.`);

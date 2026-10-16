@@ -29,9 +29,20 @@ export const login = async (correo, password, ipAddress, userAgent) => {
     { expiresIn: '8h', algorithm: 'HS256', jwtid: crypto.randomUUID() }
   );
 
-  // 4. Almacenar sesión activa en refresh_tokens
-  const expiresAt = new Date();
+  // 4. Purgar sesiones expiradas o revocadas previas del usuario y almacenar sesión activa
+  const now = new Date();
+  const expiresAt = new Date(now);
   expiresAt.setHours(expiresAt.getHours() + 8); // Expira en 8 horas, coherente con JWT
+
+  await prisma.refreshToken.deleteMany({
+    where: {
+      userId: user.id,
+      OR: [
+        { revoked: true },
+        { expiresAt: { lt: now } }
+      ]
+    }
+  });
 
   await prisma.refreshToken.create({
     data: {

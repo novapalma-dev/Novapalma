@@ -9,6 +9,11 @@ import { formatError } from '../utils/errorHandler.js';
  * Reservado exclusivamente para administradores autenticados.
  */
 
+const getAuditMeta = (req) => ({
+  ipAddress: req.ip || req.socket?.remoteAddress || null,
+  userAgent: req.get('User-Agent') || null
+});
+
 /**
  * @route   GET /api/usuarios
  * @desc    Lista todos los usuarios (operadores y administradores) activos
@@ -32,7 +37,7 @@ export const getUsers = async (req, res) => {
  */
 export const createNewUser = async (req, res) => {
   try {
-    const user = await userService.createUser(req.body, req.user.id);
+    const user = await userService.createUser(req.body, req.user.id, getAuditMeta(req));
     res.status(201).json(user);
   } catch (error) {
     const { status, message } = formatError(error);
@@ -48,7 +53,7 @@ export const createNewUser = async (req, res) => {
  */
 export const updateUser = async (req, res) => {
   try {
-    const user = await userService.updateUser(req.params.id, req.body, req.user.id);
+    const user = await userService.updateUser(req.params.id, req.body, req.user.id, getAuditMeta(req));
     res.json(user);
   } catch (error) {
     const { status, message } = formatError(error);

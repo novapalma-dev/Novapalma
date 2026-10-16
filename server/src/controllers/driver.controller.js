@@ -9,15 +9,20 @@ import { formatError } from '../utils/errorHandler.js';
  * Conecta los endpoints de conductores con el servicio correspondiente.
  */
 
+const getAuditMeta = (req) => ({
+  ipAddress: req.ip || req.socket?.remoteAddress || null,
+  userAgent: req.get('User-Agent') || null
+});
+
 /**
  * @route   POST /api/conductores
- * @desc    Registra un nuevo conductor o reactiva uno inactivo
+ * @desc    Registra un nuevo conductor
  * @access  Privado (ADMIN, OPERADOR)
  * @trazabilidad Pasa req.user.id al servicio para registrar el actor en la auditoría inmutable
  */
 export const create = async (req, res) => {
   try {
-    const driver = await driverService.createDriver(req.body, req.user.id);
+    const driver = await driverService.createDriver(req.body, req.user.id, getAuditMeta(req));
     res.status(201).json(driver);
   } catch (error) {
     const { status, message } = formatError(error);
@@ -65,7 +70,7 @@ export const getById = async (req, res) => {
  */
 export const update = async (req, res) => {
   try {
-    const driver = await driverService.updateDriver(req.params.id, req.body, req.user.id);
+    const driver = await driverService.updateDriver(req.params.id, req.body, req.user.id, getAuditMeta(req));
     res.json(driver);
   } catch (error) {
     const { status, message } = formatError(error);
@@ -81,7 +86,7 @@ export const update = async (req, res) => {
  */
 export const remove = async (req, res) => {
   try {
-    const driver = await driverService.deleteDriver(req.params.id, req.user.id);
+    const driver = await driverService.deleteDriver(req.params.id, req.user.id, getAuditMeta(req));
     res.json({ message: 'Conductor eliminado (Soft Delete)', driver });
   } catch (error) {
     const { status, message } = formatError(error);

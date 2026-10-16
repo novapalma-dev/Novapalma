@@ -4,7 +4,7 @@ import * as auditService from './audit.service.js';
 /**
  * Crea un nuevo conductor con registro de auditoría.
  */
-export const createDriver = async (driverData, userId = null) => {
+export const createDriver = async (driverData, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     // Verificar si ya existe un conductor con esa cédula
     const existingDriver = await tx.driver.findUnique({
@@ -34,7 +34,9 @@ export const createDriver = async (driverData, userId = null) => {
       action: 'CREATE',
       entity: 'Driver',
       entityId: newDriver.id,
-      newValues: newDriver
+      newValues: newDriver,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`👨‍✈️ Conductor ${newDriver.primerNombre} ${newDriver.primerApellido} creado. 🛡️ Auditoría registrada.`);
@@ -66,7 +68,7 @@ export const getDriverById = async (id) => {
 /**
  * Actualiza un conductor con registro de auditoría.
  */
-export const updateDriver = async (id, updateData, userId = null) => {
+export const updateDriver = async (id, updateData, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     const [locked] = await tx.$queryRaw`SELECT id, activo, "deletedAt" FROM drivers WHERE id = ${id}::uuid FOR UPDATE`;
     if (!locked) throw new Error('Conductor no encontrado');
@@ -98,7 +100,9 @@ export const updateDriver = async (id, updateData, userId = null) => {
       entity: 'Driver',
       entityId: id,
       oldValues: oldDriver,
-      newValues: updatedDriver
+      newValues: updatedDriver,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`✅ Conductor ${updatedDriver.primerNombre} actualizado. 🛡️ Auditoría registrada.`);
@@ -109,7 +113,7 @@ export const updateDriver = async (id, updateData, userId = null) => {
 /**
  * Realiza un Soft Delete del conductor.
  */
-export const deleteDriver = async (id, userId = null) => {
+export const deleteDriver = async (id, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     const [locked] = await tx.$queryRaw`SELECT id FROM drivers WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
     if (!locked) throw new Error('Conductor no encontrado o ya ha sido eliminado');
@@ -130,7 +134,9 @@ export const deleteDriver = async (id, userId = null) => {
       entity: 'Driver',
       entityId: id,
       oldValues: oldDriver,
-      newValues: { deletedAt: deletedDriver.deletedAt, activo: false }
+      newValues: { deletedAt: deletedDriver.deletedAt, activo: false },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🗑️ Soft Delete aplicado al conductor ${oldDriver.cedula}. 🛡️ Auditoría registrada.`);
