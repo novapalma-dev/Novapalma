@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { Plus, Save, AlertCircle, X, Edit, Trash2, Search, Info, CheckCircle2 } from 'lucide-react';
+import { Plus, Save, AlertCircle, X, Edit, Trash2, Search, Info, CheckCircle2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 // Formateador de moneda estilo colombiano (separador de miles con punto)
@@ -34,6 +34,18 @@ const getInitialFormData = () => ({
 const Trips = ({ isDashboard = false }) => {
   const { isAdmin } = useAuth();
   const [trips, setTrips] = useState([]);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: isDashboard ? 8 : 15,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(isDashboard ? 8 : 15);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +53,6 @@ const Trips = ({ isDashboard = false }) => {
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [confirmModal, setConfirmModal] = useState({
     show: false,
@@ -53,15 +64,23 @@ const Trips = ({ isDashboard = false }) => {
   // Estado del formulario
   const [formData, setFormData] = useState(getInitialFormData());
 
+  // Debounce para búsqueda reactiva en servidor
   useEffect(() => {
-    fetchData();
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // 1. Cargar catálogos auxiliares (conductores, vehículos, configuración) una sola vez
+  useEffect(() => {
+    fetchAuxiliaryData();
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchAuxiliaryData = async () => {
     try {
-      const [tripsRes, driversRes, vehiclesRes, configRes] = await Promise.all([
-        api.get('/viajes'),
+      const [driversRes, vehiclesRes, configRes] = await Promise.all([
         api.get('/conductores'),
         api.get('/vehiculos'),
         api.get('/configuracion').catch(() => ({ data: null }))
@@ -75,11 +94,37 @@ const Trips = ({ isDashboard = false }) => {
         localStorage.setItem('defaultDestino', cfg.defaultDestino ?? '');
         localStorage.setItem('thousandSeparator', cfg.thousandSeparator ?? '.');
       }
-      setTrips(tripsRes.data);
       setDrivers(driversRes.data);
       setVehicles(vehiclesRes.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching auxiliary data:', error);
+    }
+  };
+
+  // 2. Cargar viajes paginados cada vez que cambie página, tamaño o búsqueda
+  useEffect(() => {
+    fetchTrips();
+  }, [currentPage, pageSize, debouncedSearch]);
+
+  const fetchTrips = async () => {
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: pageSize.toString()
+      });
+      if (debouncedSearch.trim()) {
+        queryParams.set('search', debouncedSearch.trim());
+      }
+      const res = await api.get(`/viajes?${queryParams.toString()}`);
+      if (res.data?.pagination) {
+        setTrips(res.data.data);
+        setPagination(res.data.pagination);
+      } else {
+        setTrips(Array.isArray(res.data) ? res.data : []);
+      }
+    } catch (error) {
+      console.error('Error fetching trips:', error);
     } finally {
       setLoading(false);
     }
@@ -250,7 +295,7 @@ const Trips = ({ isDashboard = false }) => {
       onConfirm: async () => {
         try {
           await api.delete(`/viajes/${id}`);
-          fetchData();
+          fetchTrips();
         } catch (err) {
           alert(err.response?.data?.error || 'Error al eliminar el viaje');
         }
@@ -290,7 +335,7 @@ const Trips = ({ isDashboard = false }) => {
       }
       
       setShowModal(false);
-      fetchData();
+      fetchTrips();
       setIsEditing(false);
       setEditingId(null);
       setFormData(getInitialFormData());
@@ -299,9 +344,7 @@ const Trips = ({ isDashboard = false }) => {
     }
   };
 
-  const filteredTrips = trips.filter((trip) => 
-    trip.ticket.toString().includes(searchTerm)
-  );
+  const displayedTrips = trips;
 
   return (
     <div>
@@ -362,17 +405,17 @@ const Trips = ({ isDashboard = false }) => {
                     Cargando viajes registrados...
                   </td>
                 </tr>
-              ) : filteredTrips.length === 0 ? (
+              ) : displayedTrips.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin() ? 13 : 12} className="text-center py-5 text-muted">
-                    {trips.length === 0 ? 'No se encontraron registros de viajes.' : 'Ningún tiquete coincide con tu búsqueda.'}
+                    {pagination.total === 0 ? 'No se encontraron registros de viajes.' : 'Ningún registro coincide con tu búsqueda.'}
                   </td>
                 </tr>
               ) : (
-                filteredTrips.map((trip) => {
+                displayedTrips.map((trip) => {
                   const driverVal = Number(trip.valorConductor || 0);
-                  const acpmVal = Number(trip.valorAcpm || 0);
-                  const ferryVal = Number(trip.valorFerry || 0);
+                  const acpmVal = trip.usoAcpm ? Number(trip.valorAcpm || 0) : 0;
+                  const ferryVal = trip.usoFerry ? Number(trip.valorFerry || 0) : 0;
                   const totalExpenses = driverVal + acpmVal + ferryVal;
                   const netUtility = Number(trip.valorPago) - totalExpenses;
 
@@ -430,6 +473,76 @@ const Trips = ({ isDashboard = false }) => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Barra de Paginación Avanzada y Responsiva */}
+        <div className="card-footer bg-white border-0 py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div className="d-flex align-items-center gap-3">
+            <span className="small text-muted">
+              Mostrando <strong className="text-dark">{trips.length > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0}</strong> a <strong className="text-dark">{Math.min(pagination.page * pagination.limit, pagination.total)}</strong> de <strong className="text-dark">{pagination.total}</strong> viajes
+            </span>
+            <div className="d-flex align-items-center gap-1">
+              <span className="small text-muted me-1">Por pág:</span>
+              <select 
+                className="form-select form-select-sm bg-light border-0" 
+                style={{ width: '70px' }}
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                <option value={8}>8</option>
+                <option value={15}>15</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="d-flex align-items-center gap-2">
+            <button 
+              type="button"
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center p-1 px-2"
+              disabled={currentPage <= 1 || loading}
+              onClick={() => setCurrentPage(1)}
+              title="Primera página"
+            >
+              <ChevronsLeft size={16} />
+            </button>
+            <button 
+              type="button"
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-2"
+              disabled={currentPage <= 1 || loading}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              title="Página anterior"
+            >
+              <ChevronLeft size={16} /> Anterior
+            </button>
+
+            <span className="small fw-semibold px-2 text-secondary">
+              Página {pagination.page} de {pagination.totalPages || 1}
+            </span>
+
+            <button 
+              type="button"
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-2"
+              disabled={currentPage >= pagination.totalPages || loading}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
+              title="Página siguiente"
+            >
+              Siguiente <ChevronRight size={16} />
+            </button>
+            <button 
+              type="button"
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center p-1 px-2"
+              disabled={currentPage >= pagination.totalPages || loading}
+              onClick={() => setCurrentPage(pagination.totalPages)}
+              title="Última página"
+            >
+              <ChevronsRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
