@@ -81,8 +81,9 @@ export const logout = async (req, res) => {
  */
 export const updateProfile = async (req, res) => {
   try {
+    const currentToken = req.cookies.token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
     // El usuario logueado req.user.id solo puede actualizar su propio perfil y contraseña
-    const user = await userService.updateOwnProfile(req.user.id, req.body);
+    const user = await userService.updateOwnProfile(req.user.id, req.body, currentToken);
     res.json({ user });
   } catch (error) {
     const { status, message } = formatError(error);

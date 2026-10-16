@@ -233,7 +233,7 @@ export const updateUser = async (id, updateData, adminId) => {
  * @param {Object} profileData - Campos validados de perfil (primerNombre, segundoNombre, etc., password).
  * @returns {Promise<Object>} Datos del usuario actualizado sin el hash de contraseña.
  */
-export const updateOwnProfile = async (userId, profileData) => {
+export const updateOwnProfile = async (userId, profileData, currentToken = null) => {
   if (!userId) {
     throw new Error('Operación denegada: Sesión no válida.');
   }
@@ -246,6 +246,9 @@ export const updateOwnProfile = async (userId, profileData) => {
 
   let passwordChanged = false;
   if (profileData.password) {
+    if (!profileData.currentPassword) {
+      throw new Error('Debe ingresar su contraseña actual para establecer una nueva contraseña.');
+    }
     const saltRounds = 10;
     allowedData.password = await bcrypt.hash(profileData.password, saltRounds);
     passwordChanged = true;
@@ -257,6 +260,13 @@ export const updateOwnProfile = async (userId, profileData) => {
     });
     if (!oldUser) throw new Error('Usuario no encontrado o inactivo');
 
+    if (passwordChanged) {
+      const isCurrentValid = await bcrypt.compare(profileData.currentPassword, oldUser.password);
+      if (!isCurrentValid) {
+        throw new Error('La contraseña actual ingresada es incorrecta.');
+      }
+    }
+
     const updatedUser = await tx.user.update({
       where: { id: userId },
       data: allowedData
@@ -264,7 +274,11 @@ export const updateOwnProfile = async (userId, profileData) => {
 
     if (passwordChanged) {
       await tx.refreshToken.updateMany({
-        where: { userId, revoked: false },
+        where: {
+          userId,
+          revoked: false,
+          ...(currentToken ? { NOT: { token: currentToken } } : {})
+        },
         data: { revoked: true }
       });
     }

@@ -16,4 +16,11 @@ export const loginSchema = z.strictObject({
 export const profileSchema = createUserSchema
   .pick({ primerNombre: true, segundoNombre: true, primerApellido: true, segundoApellido: true, password: true })
   .partial()
-  .strict();
+  .extend({
+    currentPassword: z.string().min(1, 'La contraseña actual es obligatoria').max(255).optional(),
+  })
+  .strict()
+  .refine((data) => !data.password || Boolean(data.currentPassword), {
+    message: 'Debe ingresar su contraseña actual para establecer una nueva contraseña',
+    path: ['currentPassword'],
+  });
