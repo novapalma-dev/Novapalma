@@ -15,10 +15,21 @@ router.get('/report', adminMiddleware, async (req, res) => {
     if (startDate || endDate) {
       whereClause.fecha = {};
       if (startDate) {
-        whereClause.fecha.gte = new Date(startDate);
+        const parsedStart = new Date(startDate);
+        if (Number.isNaN(parsedStart.getTime())) {
+          return res.status(400).json({ error: 'La fecha inicial no tiene un formato válido' });
+        }
+        whereClause.fecha.gte = parsedStart;
       }
       if (endDate) {
-        whereClause.fecha.lte = new Date(endDate + 'T23:59:59.999Z');
+        const parsedEnd = new Date(endDate + 'T23:59:59.999Z');
+        if (Number.isNaN(parsedEnd.getTime())) {
+          return res.status(400).json({ error: 'La fecha final no tiene un formato válido' });
+        }
+        whereClause.fecha.lte = parsedEnd;
+      }
+      if (whereClause.fecha.gte && whereClause.fecha.lte && whereClause.fecha.gte > whereClause.fecha.lte) {
+        return res.status(400).json({ error: 'La fecha inicial no puede ser posterior a la fecha final' });
       }
     }
 
@@ -38,7 +49,7 @@ router.get('/report', adminMiddleware, async (req, res) => {
     });
 
     // Aggregates
-    const stats = trips.reduce(
+    const rawStats = trips.reduce(
       (acc, trip) => {
         acc.totalTons += Number(trip.tonelaje);
         acc.totalBilling += Number(trip.valorPago);
@@ -74,6 +85,20 @@ router.get('/report', adminMiddleware, async (req, res) => {
         totalNet: 0
       }
     );
+
+    const round2 = (n) => Math.round(n * 100) / 100;
+    const round3 = (n) => Math.round(n * 1000) / 1000;
+    const stats = {
+      totalTons: round3(rawStats.totalTons),
+      totalBilling: round2(rawStats.totalBilling),
+      totalAcpm: round3(rawStats.totalAcpm),
+      totalFerryCrossings: rawStats.totalFerryCrossings,
+      totalDriverPayout: round2(rawStats.totalDriverPayout),
+      totalAcpmCost: round2(rawStats.totalAcpmCost),
+      totalFerryCost: round2(rawStats.totalFerryCost),
+      totalExpenses: round2(rawStats.totalExpenses),
+      totalNet: round2(rawStats.totalNet)
+    };
 
     res.json({
       trips,
