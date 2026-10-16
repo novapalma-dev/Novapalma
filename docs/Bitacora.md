@@ -41,12 +41,16 @@
   * **BL-10:** Restricción de fechas futuras y límite físico de `tonelaje` (`<= 60` Ton) y `capacidad` (`<= 60` Ton) en `trip.schema.js`, `vehicle.schema.js` y `Trips.jsx`.
   * **BL-11:** Bloqueo de asignación de viajes a vehículos en estado `MANTENIMIENTO` en `validateActiveVehicle` (`trip.service.js`) y en `Trips.jsx`, e incorporación del selector de `estado` operativo en `Vehicles.jsx`.
   * **BL-12:** Verificación obligatoria de `currentPassword` al actualizar contraseña en `PUT /api/auth/perfil` (`auth.schema.js`, `user.service.js`, `Settings.jsx`), preservando activa la sesión actual mientras se revocan las demás sesiones.
+* **Octubre 2026 — Remediación de Lógica de Negocio (Sesión 4: BL-13 a BL-15):**
+  * **BL-13:** Validación estricta de formato/rango de fechas y redondeo aritmético a 2/3 decimales en `/api/finanzas/report` (`finance.routes.js`), corrección del cierre léxico en `handleReset` de `Finance.jsx`, y sincronización de `displayedStats` y `exportToExcel` con `filteredTrips` y flags `usoAcpm`/`usoFerry`.
+  * **BL-14:** Unificación de validaciones de `cedula` (6 a 20 dígitos) y `telefono` (7 a 15 dígitos) entre `Drivers.jsx` y `driver.schema.js`.
+  * **BL-15:** Propagación de metadatos forenses (`ipAddress` y `userAgent`) desde los controladores hacia todos los servicios CRUD (`trip`, `vehicle`, `driver`, `user`), snapshots simétricos de viajes en `audit_logs`, y limpieza automática de `refresh_tokens` expirados/revocados al iniciar sesión.
 
 ---
 
 ## Tareas y Próximos Pasos
 
 - [x] Corrección de condiciones de carrera y mass assignment en backend.
+- [x] Remediación integral de vulnerabilidades de lógica de negocio (BL-01 a BL-15).
 - [ ] Revisión de migraciones Prisma y pools de conexión con `@prisma/adapter-pg`.
-- [ ] Optimización de filtros en reportes financieros por rango de fechas y conductores.
 - [ ] Mantenimiento de suites E2E con Selenium WebDriver.
