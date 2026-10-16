@@ -44,7 +44,7 @@
 * **Octubre 2026 — Remediación de Lógica de Negocio (Sesión 4: BL-13 a BL-15):**
   * **BL-13:** Validación estricta de formato/rango de fechas y redondeo aritmético a 2/3 decimales en `/api/finanzas/report` (`finance.routes.js`), corrección del cierre léxico en `handleReset` de `Finance.jsx`, y sincronización de `displayedStats` y `exportToExcel` con `filteredTrips` y flags `usoAcpm`/`usoFerry`.
   * **BL-14:** Unificación de validaciones de `cedula` (6 a 20 dígitos) y `telefono` (7 a 15 dígitos) entre `Drivers.jsx` y `driver.schema.js`.
-  * **BL-15:** Propagación de metadatos forenses (`ipAddress` y `userAgent`) desde los controladores hacia todos los servicios CRUD (`trip`, `vehicle`, `driver`, `user`), snapshots simétricos de viajes en `audit_logs`, y limpieza automática de `refresh_tokens` expirados/revocados al iniciar sesión.
+  * **BL-15:** Propagación de metadatos forenses (`ipAddress` y `userAgent`) desde los controladores hacia todos los servicios CRUD (`trip`, `vehicle`, `driver`, `user`), snapshots simétricos de viajes en `audit_logs`, y limpieza automática de `refresh_tokens` expirados/revocados al iniciar sesión. Módulo de red (`network.js`) para resolver la IP pública real del cliente saltando los proxies internos de Render (`10.x.x.x`).
 
 ---
 
