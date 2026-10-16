@@ -32,7 +32,7 @@ export const create = async (req, res) => {
  */
 export const getAll = async (req, res) => {
   try {
-    const includeDeleted = req.query.includeDeleted === 'true';
+    const includeDeleted = req.query.includeDeleted === 'true' && req.user?.rol === 'ADMIN';
     const vehicles = await vehicleService.getAllVehicles(includeDeleted);
     res.json(vehicles);
   } catch (error) {

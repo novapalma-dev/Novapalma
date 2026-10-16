@@ -12,23 +12,8 @@ export const createDriver = async (driverData, userId = null) => {
     });
 
     if (existingDriver) {
-      if (!existingDriver.activo) {
-        // Si existe pero está inactivo, lo reactivamos (opcional, según lógica de negocio)
-        const reactivatedDriver = await tx.driver.update({
-          where: { id: existingDriver.id },
-          data: { ...driverData, activo: true, deletedAt: null }
-        });
-
-        await auditService.logAudit({
-          userId,
-          action: 'UPDATE', // Fue una reactivación
-          entity: 'Driver',
-          entityId: reactivatedDriver.id,
-          oldValues: existingDriver,
-          newValues: reactivatedDriver
-        }, tx);
-
-        return reactivatedDriver;
+      if (!existingDriver.activo || existingDriver.deletedAt !== null) {
+        throw new Error('Ya existe un conductor inactivo registrado con esta cédula. Un administrador debe reactivarlo desde el panel de conductores.');
       }
       throw new Error('Ya existe un conductor registrado con esta cédula');
     }
@@ -65,7 +50,7 @@ export const getAllDrivers = async (includeDeleted = false) => {
     return await prisma.driver.findMany();
   }
   return await prisma.driver.findMany({
-    where: { deletedAt: null }
+    where: { deletedAt: null, activo: true }
   });
 };
 

@@ -62,7 +62,7 @@ export const getById = async (req, res) => {
 /**
  * @route   PUT /api/viajes/:id
  * @desc    Actualiza un flete existente y recalcula los valores del flete
- * @access  Privado (ADMIN, OPERADOR)
+ * @access  Privado (ADMIN)
  * @trazabilidad Pasa el ID del usuario editor para loguear quién modificó el viaje (actualizadoPorId)
  */
 export const update = async (req, res) => {

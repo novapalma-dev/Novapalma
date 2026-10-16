@@ -11,29 +11,8 @@ export const createVehicle = async (vehicleData, userId = null) => {
     });
 
     if (existingVehicle) {
-      if (!existingVehicle.activo) {
-        const reactivatedVehicle = await tx.vehicle.update({
-          where: { id: existingVehicle.id },
-          data: {
-            marca: vehicleData.marca,
-            modelo: vehicleData.modelo,
-            capacidad: vehicleData.capacidad,
-            estado: vehicleData.estado || 'DISPONIBLE',
-            activo: true,
-            deletedAt: null
-          }
-        });
-
-        await auditService.logAudit({
-          userId,
-          action: 'UPDATE',
-          entity: 'Vehicle',
-          entityId: reactivatedVehicle.id,
-          oldValues: existingVehicle,
-          newValues: reactivatedVehicle
-        }, tx);
-
-        return reactivatedVehicle;
+      if (!existingVehicle.activo || existingVehicle.deletedAt !== null) {
+        throw new Error('Ya existe un vehículo inactivo registrado con esta placa. Un administrador debe reactivarlo desde el panel de flota.');
       }
       throw new Error('Ya existe un vehículo registrado con esta placa');
     }
@@ -69,7 +48,7 @@ export const getAllVehicles = async (includeDeleted = false) => {
     return await prisma.vehicle.findMany();
   }
   return await prisma.vehicle.findMany({
-    where: { deletedAt: null }
+    where: { deletedAt: null, activo: true }
   });
 };
 
