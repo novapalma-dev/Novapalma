@@ -1,6 +1,7 @@
 import * as authService from '../services/auth.service.js';
 import * as userService from '../services/user.service.js';
 import { formatError } from '../utils/errorHandler.js';
+import { getClientIp } from '../utils/network.js';
 
 /**
  * ============================================================
@@ -19,8 +20,8 @@ import { formatError } from '../utils/errorHandler.js';
 export const login = async (req, res) => {
   const { correo, password } = req.body;
   
-  // Extracción confiable de IP resuelta por Express según la política acotada de trust proxy
-  const ipAddress = req.ip || req.socket?.remoteAddress;
+  // Extracción confiable de IP pública real descartando proxies internos
+  const ipAddress = getClientIp(req);
   
   const userAgent = req.get('User-Agent');
 
@@ -57,7 +58,7 @@ export const login = async (req, res) => {
  */
 export const logout = async (req, res) => {
   const token = req.cookies.token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
-  const ipAddress = req.ip || req.socket?.remoteAddress;
+  const ipAddress = getClientIp(req);
   const userAgent = req.get('User-Agent');
 
   try {
@@ -83,7 +84,7 @@ export const updateProfile = async (req, res) => {
   try {
     const currentToken = req.cookies.token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
     const auditMeta = {
-      ipAddress: req.ip || req.socket?.remoteAddress || null,
+      ipAddress: getClientIp(req),
       userAgent: req.get('User-Agent') || null
     };
     // El usuario logueado req.user.id solo puede actualizar su propio perfil y contraseña

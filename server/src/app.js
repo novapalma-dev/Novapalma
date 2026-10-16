@@ -67,9 +67,10 @@ app.use(cors({
 
 // 3. RATE LIMITING: Defensa contra ataques de denegación de servicio (DoS) 
 // y fuerza bruta en endpoints sensibles.
-// Blindaje de red: Acotar trust proxy al número específico de saltos del reverse proxy
-// (por defecto 1), evitando spoofing de IP mediante cabeceras X-Forwarded-For manipuladas.
-app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1)); 
+// Blindaje de red: En plataformas PaaS como Render, el tráfico atraviesa múltiples
+// balanceadores de carga y proxies internos (10.x.x.x). Con 'true' (o hops configurados),
+// Express resuelve la IP pública real del cliente en lugar de la IP privada del contenedor proxy.
+app.set('trust proxy', process.env.TRUST_PROXY_HOPS ? Number(process.env.TRUST_PROXY_HOPS) : true); 
 
 // Limitador exclusivo para el Login (Previene Fuerza Bruta en contraseñas)
 const loginLimiter = rateLimit({
