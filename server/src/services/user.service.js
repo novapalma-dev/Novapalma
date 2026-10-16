@@ -76,7 +76,7 @@ export const createUser = async (userData, creatorId = null) => {
         segundoNombre: userData.segundoNombre,
         primerApellido: userData.primerApellido,
         segundoApellido: userData.segundoApellido,
-        correo: userData.correo,
+        correo: userData.correo.trim().toLowerCase(),
         password: hashedPassword,
         rol: userData.rol || 'OPERADOR'
       }
@@ -139,6 +139,9 @@ export const updateUser = async (id, updateData, adminId) => {
   }
 
   const dataToUpdate = { ...updateData };
+  if (dataToUpdate.correo) {
+    dataToUpdate.correo = dataToUpdate.correo.trim().toLowerCase();
+  }
 
   // Cifrar de forma asíncrona la contraseña si se está enviando una actualización de contraseña
   if (updateData.password) {

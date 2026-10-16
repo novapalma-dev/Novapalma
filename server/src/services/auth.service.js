@@ -5,9 +5,11 @@ import crypto from 'node:crypto';
 import * as auditService from './audit.service.js';
 
 export const login = async (correo, password, ipAddress, userAgent) => {
-  // 1. Buscar usuario
-  const user = await prisma.user.findUnique({
-    where: { correo, activo: true }
+  const normalizedEmail = String(correo).trim().toLowerCase();
+
+  // 1. Buscar usuario activo y sin baja lógica
+  const user = await prisma.user.findFirst({
+    where: { correo: normalizedEmail, activo: true, deletedAt: null }
   });
 
   if (!user) {
