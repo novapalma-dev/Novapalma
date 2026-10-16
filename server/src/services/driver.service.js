@@ -59,7 +59,7 @@ export const getAllDrivers = async (includeDeleted = false) => {
  */
 export const getDriverById = async (id) => {
   return await prisma.driver.findUnique({
-    where: { id, deletedAt: null }
+    where: { id, deletedAt: null, activo: true }
   });
 };
 
@@ -68,14 +68,28 @@ export const getDriverById = async (id) => {
  */
 export const updateDriver = async (id, updateData, userId = null) => {
   return await prisma.$transaction(async (tx) => {
-    const [locked] = await tx.$queryRaw`SELECT id FROM drivers WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
-    if (!locked) throw new Error('Conductor no encontrado o ya ha sido eliminado');
+    const [locked] = await tx.$queryRaw`SELECT id, activo, "deletedAt" FROM drivers WHERE id = ${id}::uuid FOR UPDATE`;
+    if (!locked) throw new Error('Conductor no encontrado');
+
+    const isCurrentlyInactive = !locked.activo || locked.deletedAt !== null;
+    if (isCurrentlyInactive && updateData.activo !== true) {
+      throw new Error('Conductor inactivo o eliminado. Debe reactivarlo antes de modificar sus datos.');
+    }
 
     const oldDriver = await tx.driver.findUniqueOrThrow({ where: { id } });
 
+    const dataToUpdate = { ...updateData };
+    if (dataToUpdate.activo === true) {
+      dataToUpdate.deletedAt = null;
+    } else if (dataToUpdate.activo === false) {
+      dataToUpdate.deletedAt = new Date();
+    } else if (dataToUpdate.deletedAt === null) {
+      dataToUpdate.activo = true;
+    }
+
     const updatedDriver = await tx.driver.update({
       where: { id },
-      data: updateData
+      data: dataToUpdate
     });
 
     await auditService.logAudit({
