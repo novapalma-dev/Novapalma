@@ -22,23 +22,44 @@ app.use(helmet());
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
-  'https://mi-proyecto-pern.vercel.app'
+  'https://mi-proyecto-pern.vercel.app',
+  'https://novapalma-bay.vercel.app',
+  'https://novapalma.vercel.app'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
     // Permitir llamadas sin origen (como postman, curl o herramientas internas)
     if (!origin) return callback(null, true);
-    
-    // Si coincide con permitidos, o es desarrollo local o coincide con variable de entorno
-    if (
-      allowedOrigins.includes(origin) || 
-      origin === process.env.CLIENT_URL || 
-      process.env.NODE_ENV !== 'production'
-    ) {
+
+    const clientUrls = (process.env.CLIENT_URL || '')
+      .split(',')
+      .map(u => u.trim().replace(/\/+$/, ''))
+      .filter(Boolean);
+
+    const normalizedOrigin = origin.replace(/\/+$/, '');
+
+    let isAllowed = 
+      allowedOrigins.includes(normalizedOrigin) || 
+      clientUrls.includes(normalizedOrigin) || 
+      process.env.NODE_ENV !== 'production';
+
+    // Permitir despliegues dinámicos y preview branches de Vercel del proyecto
+    if (!isAllowed) {
+      try {
+        const parsed = new URL(origin);
+        if (parsed.hostname.endsWith('.vercel.app')) {
+          isAllowed = true;
+        }
+      } catch {
+        isAllowed = false;
+      }
+    }
+
+    if (isAllowed) {
       callback(null, true);
     } else {
-      callback(new Error('Bloqueado por políticas CORS de Novapalma'));
+      callback(new Error(`Bloqueado por políticas CORS de Novapalma: ${origin}`));
     }
   },
   credentials: true // Crucial para permitir el envío de HttpOnly Cookies
