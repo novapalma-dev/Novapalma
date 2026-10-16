@@ -26,6 +26,11 @@
   * **C3:** Verificación estricta de token con `HS256`, consulta de usuario y rol fresco desde BD en cada petición autenticada, y revocación automática de sesiones ante cambios de rol, desactivación de cuenta o actualización de credenciales.
   * **C5/C6:** Hardening de `trust proxy` acotado por variables de entorno, extracción segura de IP contra spoofing, logout atómico con verificación estricta de firma y limpieza de cookies con directivas de seguridad completas.
   * **C4/C7:** Prevención de race conditions y lost updates mediante `FOR UPDATE` en transacciones ACID con raw queries en Prisma (`updateTrip`, `deleteTrip`, `updateUser`, `updateVehicle`, `updateDriver`), y serialización del quórum mínimo de administradores.
+* **Octubre 2026 — Remediación de Lógica de Negocio (Sesión 1: BL-01 a BL-04):**
+  * **BL-01:** Normalización estricta de `correo` (`.trim().toLowerCase()`) en esquemas Zod (`user.schema.js`) y capa de servicios (`user.service.js`, `auth.service.js`), y validación de `deletedAt: null` en `login`, evitando cuentas bloqueadas por mayúsculas.
+  * **BL-02:** Restricción RBAC (`adminMiddleware`) en `PUT /api/viajes/:id` (`trip.routes.js`), alineando el backend con la política de solo administradores de `Trips.jsx`.
+  * **BL-03:** Bloqueo de reactivación y sobrescritura implícita de vehículos/conductores inactivos en `POST /api/vehiculos` y `POST /api/conductores`, y restricción de `includeDeleted=true` exclusivamente al rol `ADMIN`.
+  * **BL-04:** Corrección del rango mensual en `dashboard.routes.js` empleando `Date.UTC` para incluir los viajes registrados el día 1 de cada mes sin desfase por zona horaria (`UTC-5`).
 
 ---
 
