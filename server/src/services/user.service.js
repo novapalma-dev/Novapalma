@@ -49,7 +49,7 @@ export const getAllUsers = async () => {
  * @returns {Promise<Object>} El usuario creado (sin el hash de contraseña).
  * @throws {Error} Si no se provee creatorId, si el creador no existe, si no es administrador o si falla el registro.
  */
-export const createUser = async (userData, creatorId = null) => {
+export const createUser = async (userData, creatorId = null, auditMeta = {}) => {
   // Regla de Trazabilidad: Se requiere identificar al actor creador obligatoriamente
   if (!creatorId) {
     throw new Error('Operación denegada: Se requiere la identificación del creador.');
@@ -76,7 +76,7 @@ export const createUser = async (userData, creatorId = null) => {
         segundoNombre: userData.segundoNombre,
         primerApellido: userData.primerApellido,
         segundoApellido: userData.segundoApellido,
-        correo: userData.correo,
+        correo: userData.correo.trim().toLowerCase(),
         password: hashedPassword,
         rol: userData.rol || 'OPERADOR'
       }
@@ -92,7 +92,9 @@ export const createUser = async (userData, creatorId = null) => {
         correo: newUser.correo,
         rol: newUser.rol,
         nombreCompleto: `${newUser.primerNombre} ${newUser.primerApellido}`
-      }
+      },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🛡️ Auditoría confirmada para el usuario: ${newUser.correo}`);
@@ -110,11 +112,12 @@ export const createUser = async (userData, creatorId = null) => {
  * @param {string} id - UUID del usuario a modificar.
  * @param {Object} updateData - Nuevos datos del usuario a aplicar.
  * @param {string} adminId - UUID del administrador que realiza la actualización.
+ * @param {Object} [auditMeta] - Metadatos forenses (ipAddress, userAgent).
  * @returns {Promise<Object>} Datos del usuario actualizado (sin password hash).
  * @throws {Error} Si el actor no es ADMIN, si se intenta el auto-bloqueo del administrador activo,
  *                 o si se intenta desactivar al único administrador activo disponible.
  */
-export const updateUser = async (id, updateData, adminId) => {
+export const updateUser = async (id, updateData, adminId, auditMeta = {}) => {
   // Regla de Trazabilidad: Identificación del autor es mandatoria
   if (!adminId) {
     throw new Error('Operación denegada: Se requiere la identificación del administrador.');
@@ -139,6 +142,9 @@ export const updateUser = async (id, updateData, adminId) => {
   }
 
   const dataToUpdate = { ...updateData };
+  if (dataToUpdate.correo) {
+    dataToUpdate.correo = dataToUpdate.correo.trim().toLowerCase();
+  }
 
   // Cifrar de forma asíncrona la contraseña si se está enviando una actualización de contraseña
   if (updateData.password) {
@@ -148,11 +154,19 @@ export const updateUser = async (id, updateData, adminId) => {
 
   // Transacción ACID para asegurar consistencia del estado del sistema
   return await prisma.$transaction(async (tx) => {
-    // 1. Obtener datos previos del usuario a modificar
-    const oldUser = await tx.user.findUnique({
+    // Blindaje C4: Bloquear con FOR UPDATE las filas de administradores activos si la mutación
+    // involucra desactivar o degradar roles, serializando comprobaciones de quórum de administradores.
+    if (updateData.activo === false || updateData.rol === 'OPERADOR') {
+      await tx.$queryRaw`SELECT id FROM users WHERE rol = 'ADMIN'::"Role" AND activo = true AND "deletedAt" IS NULL FOR UPDATE`;
+    }
+
+    // 1. Obtener datos previos del usuario a modificar con lock exclusivo para evitar lost updates
+    const [lockedUser] = await tx.$queryRaw`SELECT id FROM users WHERE id = ${id}::uuid FOR UPDATE`;
+    if (!lockedUser) throw new Error('Usuario no encontrado');
+
+    const oldUser = await tx.user.findUniqueOrThrow({
       where: { id }
     });
-    if (!oldUser) throw new Error('Usuario no encontrado');
 
     // Blindaje de resiliencia: Si el usuario objetivo es ADMIN y se le intenta desactivar
     // o degradar de rol, validar que exista al menos otro administrador activo para evitar
@@ -177,6 +191,14 @@ export const updateUser = async (id, updateData, adminId) => {
       data: dataToUpdate
     });
 
+    // Blindaje C3: Revocar sesiones activas si se desactiva, degrada rol o cambia contraseña
+    if (updateData.activo === false || updateData.rol !== undefined || updateData.password) {
+      await tx.refreshToken.updateMany({
+        where: { userId: id, revoked: false },
+        data: { revoked: true }
+      });
+    }
+
     // 3. Registrar auditoría forense capturando el delta de los cambios
     await auditService.logAudit({
       userId: adminId,
@@ -194,12 +216,99 @@ export const updateUser = async (id, updateData, adminId) => {
         rol: updatedUser.rol,
         activo: updatedUser.activo,
         nombreCompleto: `${updatedUser.primerNombre} ${updatedUser.primerApellido}`
-      }
+      },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🛡️ Auditoría de actualización confirmada para el usuario: ${updatedUser.correo}`);
 
     // Remover hash sensible antes de retornar los datos
+    const { password, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
+  });
+};
+
+/**
+ * Actualiza los datos de perfil y contraseña del propio usuario autenticado (autoservicio).
+ * Permite tanto a OPERADOR como a ADMIN modificar su nombre y contraseña sin requerir privilegios de admin.
+ * Bloquea estrictamente la alteración de correo, rol, activo o deletedAt.
+ *
+ * @param {string} userId - UUID del usuario autenticado.
+ * @param {Object} profileData - Campos validados de perfil (primerNombre, segundoNombre, etc., password).
+ * @param {string|null} [currentToken] - Token JWT activo de la sesión actual.
+ * @param {Object} [auditMeta] - Metadatos forenses (ipAddress, userAgent).
+ * @returns {Promise<Object>} Datos del usuario actualizado sin el hash de contraseña.
+ */
+export const updateOwnProfile = async (userId, profileData, currentToken = null, auditMeta = {}) => {
+  if (!userId) {
+    throw new Error('Operación denegada: Sesión no válida.');
+  }
+
+  const allowedData = {};
+  if (profileData.primerNombre !== undefined) allowedData.primerNombre = profileData.primerNombre;
+  if (profileData.segundoNombre !== undefined) allowedData.segundoNombre = profileData.segundoNombre;
+  if (profileData.primerApellido !== undefined) allowedData.primerApellido = profileData.primerApellido;
+  if (profileData.segundoApellido !== undefined) allowedData.segundoApellido = profileData.segundoApellido;
+
+  let passwordChanged = false;
+  if (profileData.password) {
+    if (!profileData.currentPassword) {
+      throw new Error('Debe ingresar su contraseña actual para establecer una nueva contraseña.');
+    }
+    const saltRounds = 10;
+    allowedData.password = await bcrypt.hash(profileData.password, saltRounds);
+    passwordChanged = true;
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    const oldUser = await tx.user.findFirst({
+      where: { id: userId, activo: true, deletedAt: null }
+    });
+    if (!oldUser) throw new Error('Usuario no encontrado o inactivo');
+
+    if (passwordChanged) {
+      const isCurrentValid = await bcrypt.compare(profileData.currentPassword, oldUser.password);
+      if (!isCurrentValid) {
+        throw new Error('La contraseña actual ingresada es incorrecta.');
+      }
+    }
+
+    const updatedUser = await tx.user.update({
+      where: { id: userId },
+      data: allowedData
+    });
+
+    if (passwordChanged) {
+      await tx.refreshToken.updateMany({
+        where: {
+          userId,
+          revoked: false,
+          ...(currentToken ? { NOT: { token: currentToken } } : {})
+        },
+        data: { revoked: true }
+      });
+    }
+
+    await auditService.logAudit({
+      userId,
+      action: 'UPDATE',
+      entity: 'User',
+      entityId: userId,
+      oldValues: {
+        primerNombre: oldUser.primerNombre,
+        primerApellido: oldUser.primerApellido,
+        passwordChanged: false
+      },
+      newValues: {
+        primerNombre: updatedUser.primerNombre,
+        primerApellido: updatedUser.primerApellido,
+        passwordChanged
+      },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
+    }, tx);
+
     const { password, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword;
   });

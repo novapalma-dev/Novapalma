@@ -19,9 +19,8 @@ import { formatError } from '../utils/errorHandler.js';
 export const login = async (req, res) => {
   const { correo, password } = req.body;
   
-  // Extracción robusta de IP pública real detrás de balanceadores y proxies (Cloudflare/Render/Vercel)
-  // El primer elemento de la cabecera 'x-forwarded-for' siempre es la IP pública original del cliente.
-  const ipAddress = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || req.socket.remoteAddress;
+  // Extracción confiable de IP resuelta por Express según la política acotada de trust proxy
+  const ipAddress = req.ip || req.socket?.remoteAddress;
   
   const userAgent = req.get('User-Agent');
 
@@ -58,7 +57,7 @@ export const login = async (req, res) => {
  */
 export const logout = async (req, res) => {
   const token = req.cookies.token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
-  const ipAddress = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || req.socket.remoteAddress;
+  const ipAddress = req.ip || req.socket?.remoteAddress;
   const userAgent = req.get('User-Agent');
 
   try {
@@ -67,7 +66,11 @@ export const logout = async (req, res) => {
     console.error('Error durante la revocación del token en logout:', error);
   }
 
-  res.clearCookie('token');
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  });
   res.json({ message: 'Sesión finalizada correctamente' });
 };
 
@@ -78,8 +81,13 @@ export const logout = async (req, res) => {
  */
 export const updateProfile = async (req, res) => {
   try {
-    // El usuario logueado req.user.id solo puede actualizar su propia cuenta
-    const user = await userService.updateUser(req.user.id, req.body, req.user.id);
+    const currentToken = req.cookies.token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
+    const auditMeta = {
+      ipAddress: req.ip || req.socket?.remoteAddress || null,
+      userAgent: req.get('User-Agent') || null
+    };
+    // El usuario logueado req.user.id solo puede actualizar su propio perfil y contraseña
+    const user = await userService.updateOwnProfile(req.user.id, req.body, currentToken, auditMeta);
     res.json({ user });
   } catch (error) {
     const { status, message } = formatError(error);

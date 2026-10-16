@@ -37,8 +37,8 @@ const Drivers = () => {
       case 'cedula':
         if (!value) {
           error = 'La cédula es requerida';
-        } else if (value.length < 8 || value.length > 10) {
-          error = 'La cédula debe tener entre 8 y 10 dígitos';
+        } else if (value.length < 6 || value.length > 20) {
+          error = 'La cédula debe tener entre 6 y 20 dígitos';
         }
         break;
       case 'primerNombre':
@@ -56,8 +56,8 @@ const Drivers = () => {
         }
         break;
       case 'telefono':
-        if (value && (value.length !== 10 || !value.startsWith('3'))) {
-          error = 'El teléfono debe tener 10 dígitos y empezar con 3';
+        if (value && (value.length < 7 || value.length > 15)) {
+          error = 'El teléfono debe tener entre 7 y 15 dígitos';
         }
         break;
       default:

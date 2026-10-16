@@ -24,13 +24,13 @@ const Finance = () => {
     }
   }, []);
 
-  const fetchReport = async () => {
+  const fetchReport = async (customStart = startDate, customEnd = endDate) => {
     setLoading(true);
     try {
       let url = '/finanzas/report';
       const params = [];
-      if (startDate) params.push(`startDate=${startDate}`);
-      if (endDate) params.push(`endDate=${endDate}`);
+      if (customStart) params.push(`startDate=${customStart}`);
+      if (customEnd) params.push(`endDate=${customEnd}`);
       if (params.length > 0) {
         url += `?${params.join('&')}`;
       }
@@ -47,18 +47,45 @@ const Finance = () => {
 
   const handleFilter = (e) => {
     e.preventDefault();
-    fetchReport();
+    fetchReport(startDate, endDate);
   };
 
   const handleReset = () => {
     setStartDate('');
     setEndDate('');
     setSearchTerm('');
-    // We fetch without filters
-    setTimeout(() => {
-      fetchReport();
-    }, 50);
+    fetchReport('', '');
   };
+
+  const filteredTrips = trips.filter(t => 
+    t.ticket.toString().includes(searchTerm)
+  );
+
+  const displayedStats = searchTerm.trim() === '' ? stats : filteredTrips.reduce((acc, t) => {
+    const billing = Number(t.valorPago || 0);
+    const driverCost = Number(t.valorConductor || 0);
+    const acpmCost = t.usoAcpm ? Number(t.valorAcpm || 0) : 0;
+    const ferryCost = t.usoFerry ? Number(t.valorFerry || 0) : 0;
+    const expenses = driverCost + acpmCost + ferryCost;
+
+    return {
+      totalTons: Number((acc.totalTons + Number(t.tonelaje || 0)).toFixed(3)),
+      totalBilling: Number((acc.totalBilling + billing).toFixed(2)),
+      totalDriverPayout: Number((acc.totalDriverPayout + driverCost).toFixed(2)),
+      totalAcpmCost: Number((acc.totalAcpmCost + acpmCost).toFixed(2)),
+      totalFerryCost: Number((acc.totalFerryCost + ferryCost).toFixed(2)),
+      totalExpenses: Number((acc.totalExpenses + expenses).toFixed(2)),
+      totalNet: Number((acc.totalNet + (billing - expenses)).toFixed(2))
+    };
+  }, {
+    totalTons: 0,
+    totalBilling: 0,
+    totalDriverPayout: 0,
+    totalAcpmCost: 0,
+    totalFerryCost: 0,
+    totalExpenses: 0,
+    totalNet: 0
+  });
 
   /**
    * EXPORTACIÓN DE REPORTES EN FORMATO EXCEL (.xlsx)
@@ -67,16 +94,16 @@ const Finance = () => {
    * - Auto-ajusta el ancho de columnas (wchs) de forma dinámica para estética premium.
    */
   const exportToExcel = () => {
-    if (trips.length === 0) {
+    if (filteredTrips.length === 0) {
       alert('No hay datos para exportar');
       return;
     }
 
     // Formateo explícito de los registros para coincidir 100% con la planilla Viajes Novapalma.xlsx
-    const formattedData = trips.map(t => {
+    const formattedData = filteredTrips.map(t => {
       const driverVal = Number(t.valorConductor || 0);
-      const acpmVal = Number(t.valorAcpm || 0);
-      const ferryVal = Number(t.valorFerry || 0);
+      const acpmVal = t.usoAcpm ? Number(t.valorAcpm || 0) : 0;
+      const ferryVal = t.usoFerry ? Number(t.valorFerry || 0) : 0;
       const totalExpenses = driverVal + acpmVal + ferryVal;
       const netUtility = Number(t.valorPago) - totalExpenses;
       
@@ -224,10 +251,6 @@ const Finance = () => {
     XLSX.writeFile(workbook, `reporte_financiero_novapalma_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const filteredTrips = trips.filter(t => 
-    t.ticket.toString().includes(searchTerm)
-  );
-
   if (!isAdmin()) {
     return <div className="alert alert-danger p-3">Acceso restringido. Solo administradores.</div>;
   }
@@ -306,21 +329,21 @@ const Finance = () => {
         <div className="col-md-3">
           <div className="card p-3 border-0 shadow-sm bg-primary text-white">
             <small className="opacity-85 text-uppercase fw-semibold" style={{ fontSize: '15px' }}>Ingresos Totales (Flete)</small>
-            <h3 className="fw-bold mt-1 mb-0">${Number(stats.totalBilling || 0).toLocaleString()}</h3>
+            <h3 className="fw-bold mt-1 mb-0">${Number(displayedStats.totalBilling || 0).toLocaleString()}</h3>
             <span className="small opacity-90 mt-1 d-inline-block">COP facturado</span>
           </div>
         </div>
         <div className="col-md-3">
           <div className="card p-3 border-0 shadow-sm bg-danger text-white">
             <small className="opacity-85 text-uppercase fw-semibold" style={{ fontSize: '15px' }}>Gastos Operativos (Total)</small>
-            <h3 className="fw-bold mt-1 mb-0">${Number(stats.totalExpenses || 0).toLocaleString()}</h3>
+            <h3 className="fw-bold mt-1 mb-0">${Number(displayedStats.totalExpenses || 0).toLocaleString()}</h3>
             <span className="small opacity-90 mt-1 d-inline-block">Conductor + ACPM + Ferry</span>
           </div>
         </div>
         <div className="col-md-3">
           <div className="card p-3 border-0 shadow-sm bg-success text-white">
             <small className="opacity-85 text-uppercase fw-semibold" style={{ fontSize: '15px' }}>Utilidad Neta (Neto)</small>
-            <h3 className="fw-bold mt-1 mb-0">${Number(stats.totalNet || 0).toLocaleString()}</h3>
+            <h3 className="fw-bold mt-1 mb-0">${Number(displayedStats.totalNet || 0).toLocaleString()}</h3>
             <span className="small opacity-90 mt-1 d-inline-block">COP rentabilidad real</span>
           </div>
         </div>
@@ -328,9 +351,9 @@ const Finance = () => {
           <div className="card p-3 border-0 shadow-sm bg-dark text-white">
             <small className="opacity-85 text-uppercase fw-semibold" style={{ fontSize: '15px' }}>Desglose de Gastos</small>
             <div className="mt-1 small" style={{ fontSize: '12px' }}>
-              <div className="d-flex justify-content-between"><span>Conductor:</span> <span className="fw-bold">${Number(stats.totalDriverPayout || 0).toLocaleString()}</span></div>
-              <div className="d-flex justify-content-between"><span>ACPM:</span> <span className="fw-bold">${Number(stats.totalAcpmCost || 0).toLocaleString()}</span></div>
-              <div className="d-flex justify-content-between"><span>Ferry:</span> <span className="fw-bold">${Number(stats.totalFerryCost || 0).toLocaleString()}</span></div>
+              <div className="d-flex justify-content-between"><span>Conductor:</span> <span className="fw-bold">${Number(displayedStats.totalDriverPayout || 0).toLocaleString()}</span></div>
+              <div className="d-flex justify-content-between"><span>ACPM:</span> <span className="fw-bold">${Number(displayedStats.totalAcpmCost || 0).toLocaleString()}</span></div>
+              <div className="d-flex justify-content-between"><span>Ferry:</span> <span className="fw-bold">${Number(displayedStats.totalFerryCost || 0).toLocaleString()}</span></div>
             </div>
           </div>
         </div>
@@ -361,16 +384,16 @@ const Finance = () => {
           <tbody>
             <tr>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '10.5px', color: '#0f172a', fontWeight: '500' }}>Balance Consolidado del Periodo (COP)</td>
-              <td style={{ border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '10.5px', color: '#0f172a', textAlign: 'right', fontWeight: '500' }}>${Number(stats.totalBilling || 0).toLocaleString()}</td>
-              <td style={{ border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '10.5px', color: '#ef4444', textAlign: 'right', fontWeight: '500' }}>-${Number(stats.totalExpenses || 0).toLocaleString()}</td>
-              <td style={{ border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '10.5px', color: '#10b981', textAlign: 'right', fontWeight: 'bold' }}>${Number(stats.totalNet || 0).toLocaleString()}</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '10.5px', color: '#0f172a', textAlign: 'right', fontWeight: '500' }}>${Number(displayedStats.totalBilling || 0).toLocaleString()}</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '10.5px', color: '#ef4444', textAlign: 'right', fontWeight: '500' }}>-${Number(displayedStats.totalExpenses || 0).toLocaleString()}</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '10.5px', color: '#10b981', textAlign: 'right', fontWeight: 'bold' }}>${Number(displayedStats.totalNet || 0).toLocaleString()}</td>
             </tr>
             <tr>
               <td colSpan="4" style={{ border: '1px solid #cbd5e1', padding: '6px 10px', fontSize: '8.5px', color: '#475569', backgroundColor: '#f8fafc', fontStyle: 'italic' }}>
                 <strong>Desglose Detallado de Egresos Auditados:</strong> 
-                Pago Neto Conductores: ${Number(stats.totalDriverPayout || 0).toLocaleString()} COP | 
-                Combustible ACPM Consumido: ${Number(stats.totalAcpmCost || 0).toLocaleString()} COP | 
-                Cruce de Ferrys y Peajes: ${Number(stats.totalFerryCost || 0).toLocaleString()} COP
+                Pago Neto Conductores: ${Number(displayedStats.totalDriverPayout || 0).toLocaleString()} COP | 
+                Combustible ACPM Consumido: ${Number(displayedStats.totalAcpmCost || 0).toLocaleString()} COP | 
+                Cruce de Ferrys y Peajes: ${Number(displayedStats.totalFerryCost || 0).toLocaleString()} COP
               </td>
             </tr>
           </tbody>
@@ -421,8 +444,8 @@ const Finance = () => {
               ) : (
                 filteredTrips.map((t) => {
                   const driverVal = Number(t.valorConductor || 0);
-                  const acpmVal = Number(t.valorAcpm || 0);
-                  const ferryVal = Number(t.valorFerry || 0);
+                  const acpmVal = t.usoAcpm ? Number(t.valorAcpm || 0) : 0;
+                  const ferryVal = t.usoFerry ? Number(t.valorFerry || 0) : 0;
                   const totalExpenses = driverVal + acpmVal + ferryVal;
 
                   return (

@@ -17,26 +17,53 @@ export const authMiddleware = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     
-    // Verificar estado de sesión activa en base de datos (Supabase)
+    // Verificar estado de sesión activa y usuario en base de datos
     const session = await prisma.refreshToken.findUnique({
-      where: { token }
+      where: { token },
+      include: {
+        user: {
+          select: {
+            id: true,
+            rol: true,
+            activo: true,
+            deletedAt: true
+          }
+        }
+      }
     });
 
-    if (!session || session.revoked) {
-      res.clearCookie('token');
-      return res.status(401).json({ error: 'Acceso denegado. La sesión ha sido cerrada o revocada.' });
+    if (
+      !session ||
+      session.revoked ||
+      session.expiresAt < new Date() ||
+      !session.user ||
+      !session.user.activo ||
+      session.user.deletedAt !== null
+    ) {
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      });
+      return res.status(401).json({ error: 'Acceso denegado. La sesión ha sido cerrada, revocada o la cuenta no está activa.' });
     }
     
-    // Inyectamos el payload (id, rol) en el objeto de la petición
-    // Esto es vital para la trazabilidad en la capa de servicios y auditoría
-    req.user = decoded; 
+    // Inyectamos el usuario con su rol FRESCO de la base de datos (mitigando retención indebida de privilegios)
+    req.user = {
+      id: session.user.id,
+      rol: session.user.rol
+    };
     
     next();
   } catch (error) {
     // Si el token es inválido, limpiamos la cookie para evitar loops de error en el cliente
-    res.clearCookie('token');
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    });
     return res.status(401).json({ error: 'Token inválido o sesión caducada.' });
   }
 };

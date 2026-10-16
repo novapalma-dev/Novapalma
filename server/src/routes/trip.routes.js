@@ -9,9 +9,9 @@ const router = Router();
 router.get('/', tripController.getAll);
 router.get('/:id', tripController.getById);
 router.post('/', validate(tripSchema), tripController.create);
-router.put('/:id', validate(updateTripSchema), tripController.update);
 
-// Solo el ADMIN puede eliminar viajes (según política de auditoría)
+// Solo el ADMIN puede editar o eliminar viajes (según política de auditoría y RBAC)
+router.put('/:id', adminMiddleware, validate(updateTripSchema), tripController.update);
 router.delete('/:id', adminMiddleware, tripController.remove);
 
 export default router;

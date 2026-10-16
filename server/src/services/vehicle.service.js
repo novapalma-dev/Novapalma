@@ -4,36 +4,15 @@ import * as auditService from './audit.service.js';
 /**
  * Crea un nuevo vehículo con registro de auditoría.
  */
-export const createVehicle = async (vehicleData, userId = null) => {
+export const createVehicle = async (vehicleData, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     const existingVehicle = await tx.vehicle.findUnique({
       where: { placa: vehicleData.placa.toUpperCase() }
     });
 
     if (existingVehicle) {
-      if (!existingVehicle.activo) {
-        const reactivatedVehicle = await tx.vehicle.update({
-          where: { id: existingVehicle.id },
-          data: {
-            marca: vehicleData.marca,
-            modelo: vehicleData.modelo,
-            capacidad: vehicleData.capacidad,
-            estado: vehicleData.estado || 'DISPONIBLE',
-            activo: true,
-            deletedAt: null
-          }
-        });
-
-        await auditService.logAudit({
-          userId,
-          action: 'UPDATE',
-          entity: 'Vehicle',
-          entityId: reactivatedVehicle.id,
-          oldValues: existingVehicle,
-          newValues: reactivatedVehicle
-        }, tx);
-
-        return reactivatedVehicle;
+      if (!existingVehicle.activo || existingVehicle.deletedAt !== null) {
+        throw new Error('Ya existe un vehículo inactivo registrado con esta placa. Un administrador debe reactivarlo desde el panel de flota.');
       }
       throw new Error('Ya existe un vehículo registrado con esta placa');
     }
@@ -53,7 +32,9 @@ export const createVehicle = async (vehicleData, userId = null) => {
       action: 'CREATE',
       entity: 'Vehicle',
       entityId: newVehicle.id,
-      newValues: newVehicle
+      newValues: newVehicle,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🚚 Vehículo ${newVehicle.placa} creado exitosamente. 🛡️ Auditoría registrada.`);
@@ -69,7 +50,7 @@ export const getAllVehicles = async (includeDeleted = false) => {
     return await prisma.vehicle.findMany();
   }
   return await prisma.vehicle.findMany({
-    where: { deletedAt: null }
+    where: { deletedAt: null, activo: true }
   });
 };
 
@@ -78,22 +59,40 @@ export const getAllVehicles = async (includeDeleted = false) => {
  */
 export const getVehicleById = async (id) => {
   return await prisma.vehicle.findUnique({
-    where: { id, deletedAt: null }
+    where: { id, deletedAt: null, activo: true }
   });
 };
 
 /**
  * Actualiza un vehículo con registro de auditoría.
  */
-export const updateVehicle = async (id, updateData, userId = null) => {
+export const updateVehicle = async (id, updateData, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
-    const oldVehicle = await tx.vehicle.findUnique({ where: { id } });
-    
-    if (!oldVehicle) throw new Error('Vehículo no encontrado');
+    const [locked] = await tx.$queryRaw`SELECT id, activo, "deletedAt" FROM vehicles WHERE id = ${id}::uuid FOR UPDATE`;
+    if (!locked) throw new Error('Vehículo no encontrado');
+
+    const isCurrentlyInactive = !locked.activo || locked.deletedAt !== null;
+    if (isCurrentlyInactive && updateData.activo !== true) {
+      throw new Error('Vehículo inactivo o eliminado. Debe reactivarlo antes de modificar sus datos.');
+    }
+
+    const oldVehicle = await tx.vehicle.findUniqueOrThrow({ where: { id } });
+
+    const dataToUpdate = { ...updateData };
+    if (dataToUpdate.placa) {
+      dataToUpdate.placa = dataToUpdate.placa.toUpperCase();
+    }
+    if (dataToUpdate.activo === true) {
+      dataToUpdate.deletedAt = null;
+    } else if (dataToUpdate.activo === false) {
+      dataToUpdate.deletedAt = new Date();
+    } else if (dataToUpdate.deletedAt === null) {
+      dataToUpdate.activo = true;
+    }
 
     const updatedVehicle = await tx.vehicle.update({
       where: { id },
-      data: updateData
+      data: dataToUpdate
     });
 
     await auditService.logAudit({
@@ -102,7 +101,9 @@ export const updateVehicle = async (id, updateData, userId = null) => {
       entity: 'Vehicle',
       entityId: id,
       oldValues: oldVehicle,
-      newValues: updatedVehicle
+      newValues: updatedVehicle,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`✅ Vehículo ${updatedVehicle.placa} actualizado. 🛡️ Auditoría registrada.`);
@@ -113,11 +114,12 @@ export const updateVehicle = async (id, updateData, userId = null) => {
 /**
  * Realiza un Soft Delete del vehículo.
  */
-export const deleteVehicle = async (id, userId = null) => {
+export const deleteVehicle = async (id, userId = null, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
-    const oldVehicle = await tx.vehicle.findUnique({ where: { id } });
+    const [locked] = await tx.$queryRaw`SELECT id FROM vehicles WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Vehículo no encontrado o ya ha sido eliminado');
 
-    if (!oldVehicle) throw new Error('Vehículo no encontrado');
+    const oldVehicle = await tx.vehicle.findUniqueOrThrow({ where: { id } });
 
     const deletedVehicle = await tx.vehicle.update({
       where: { id },
@@ -133,7 +135,9 @@ export const deleteVehicle = async (id, userId = null) => {
       entity: 'Vehicle',
       entityId: id,
       oldValues: oldVehicle,
-      newValues: { deletedAt: deletedVehicle.deletedAt, activo: false }
+      newValues: { deletedAt: deletedVehicle.deletedAt, activo: false },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🗑️ Soft Delete aplicado al vehículo ${oldVehicle.placa}. 🛡️ Auditoría registrada.`);

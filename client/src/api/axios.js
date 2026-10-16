@@ -2,7 +2,7 @@ import axios from 'axios';
 
 /**
  * Instancia de Axios con Hardening de Seguridad.
- * Como DevOps Senior, habilitamos 'withCredentials' para permitir el envío automático
+ * Para permitir el envío automático
  * de Cookies HttpOnly en cada petición, eliminando la necesidad de manejar tokens en JS.
  */
 const api = axios.create({
@@ -16,10 +16,10 @@ api.interceptors.response.use(
   (error) => {
     // Si el servidor retorna 401, la sesión ha expirado o es inválida
     if (error.response && error.response.status === 401) {
-      // Limpiamos el estado local del usuario (pero el token ya está protegido en la cookie)
+      // Limpia el estado local del usuario (pero el token ya está protegido en la cookie)
       localStorage.removeItem('user');
       
-      // Evitamos redirecciones infinitas si ya estamos en el login
+      // Evitar redirecciones infinitas si ya se encuentra en el login
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }

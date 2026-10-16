@@ -22,9 +22,12 @@ const validateActiveVehicle = async (tx, vehicleId) => {
     where: { id: vehicleId }
   });
   
-  // Garantizar que la consulta retornó un vehículo y que su campo de vigencia (activo) es verdadero.
-  if (!vehicle || !vehicle.activo) {
+  // Garantizar que la consulta retornó un vehículo activo y sin marca de borrado lógico.
+  if (!vehicle || !vehicle.activo || vehicle.deletedAt !== null) {
     throw new Error('Vehículo no encontrado o inactivo');
+  }
+  if (vehicle.estado === 'MANTENIMIENTO') {
+    throw new Error(`El vehículo ${vehicle.placa} se encuentra en MANTENIMIENTO y no puede ser asignado a viajes`);
   }
   
   return vehicle;
@@ -45,8 +48,8 @@ const validateActiveDriver = async (tx, driverId) => {
     where: { id: driverId }
   });
   
-  // Garantizar que la consulta retornó un conductor y que su campo de vigencia (activo) es verdadero.
-  if (!driver || !driver.activo) {
+  // Garantizar que la consulta retornó un conductor activo y sin marca de borrado lógico.
+  if (!driver || !driver.activo || driver.deletedAt !== null) {
     throw new Error('Conductor no encontrado o inactivo');
   }
   
@@ -67,9 +70,13 @@ const calculateConductorPay = (valorPago, porcentajeConductor) => {
   const pct = porcentajeConductor !== undefined && porcentajeConductor !== null 
     ? Number(porcentajeConductor) 
     : 1.00;
+
+  if (Number.isNaN(pct) || pct < 0 || pct > 100) {
+    throw new Error('El porcentaje del conductor debe estar entre 0% y 100%');
+  }
   
-  // Fórmula de comisión: Pago al conductor es el flete por el porcentaje sobre 100
-  const valorConductor = valorPago * (pct / 100);
+  // Fórmula de comisión redondeada a 2 decimales para evitar residuos IEEE 754
+  const valorConductor = Math.round(valorPago * (pct / 100) * 100) / 100;
   
   return { pct, valorConductor };
 };
@@ -99,6 +106,10 @@ const parseUpdateFields = (dataToUpdate) => {
     dataToUpdate.porcentajeConductor = Number(dataToUpdate.porcentajeConductor);
   }
   
+  if (dataToUpdate.consumoAcpm !== undefined && dataToUpdate.consumoAcpm !== null) {
+    dataToUpdate.consumoAcpm = Number(dataToUpdate.consumoAcpm);
+  }
+
   if (dataToUpdate.valorAcpm !== undefined && dataToUpdate.valorAcpm !== null) {
     dataToUpdate.valorAcpm = Number(dataToUpdate.valorAcpm);
   }
@@ -124,7 +135,7 @@ const parseUpdateFields = (dataToUpdate) => {
  * @param {string} userId - ID del usuario que registra el viaje (para auditoría).
  * @returns {Promise<Object>} El viaje creado con sus relaciones.
  */
-export const createTrip = async (tripData, userId) => {
+export const createTrip = async (tripData, userId, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
     // 1. Validar que el vehículo esté activo mediante helper encapsulado
     await validateActiveVehicle(tx, tripData.vehicleId);
@@ -141,7 +152,20 @@ export const createTrip = async (tripData, userId) => {
     // 4. Calcular el pago al conductor (porcentaje del flete) usando helper aislado
     const { pct, valorConductor } = calculateConductorPay(valorPago, tripData.porcentajeConductor);
 
-    // 5. Crear el registro del viaje en la base de datos
+    // 5. Normalizar coherencia entre flags de uso (ACPM / Ferry) y sus importes asociados
+    const usoAcpm = Boolean(tripData.usoAcpm);
+    const usoFerry = Boolean(tripData.usoFerry);
+    const consumoAcpm = usoAcpm && tripData.consumoAcpm !== undefined && tripData.consumoAcpm !== null
+      ? Number(tripData.consumoAcpm)
+      : 0;
+    const valorAcpm = usoAcpm && tripData.valorAcpm !== undefined && tripData.valorAcpm !== null
+      ? Number(tripData.valorAcpm)
+      : 0.00;
+    const valorFerry = usoFerry && tripData.valorFerry !== undefined && tripData.valorFerry !== null
+      ? Number(tripData.valorFerry)
+      : 0.00;
+
+    // 6. Crear el registro del viaje en la base de datos
     const newTrip = await tx.trip.create({
       data: {
         ticket: Number(tripData.ticket),
@@ -152,13 +176,13 @@ export const createTrip = async (tripData, userId) => {
         producto: tripData.producto,
         tonelaje: tripData.tonelaje,
         valorPago: valorPago,
-        consumoAcpm: tripData.consumoAcpm,
-        usoAcpm: tripData.usoAcpm || false,
-        usoFerry: tripData.usoFerry || false,
+        consumoAcpm,
+        usoAcpm,
+        usoFerry,
         porcentajeConductor: pct,
         valorConductor: valorConductor,
-        valorAcpm: tripData.valorAcpm !== undefined && tripData.valorAcpm !== null ? Number(tripData.valorAcpm) : 0.00,
-        valorFerry: tripData.valorFerry !== undefined && tripData.valorFerry !== null ? Number(tripData.valorFerry) : 0.00,
+        valorAcpm,
+        valorFerry,
         driverId: tripData.driverId,
         vehicleId: tripData.vehicleId,
         registradoPorId: userId
@@ -169,13 +193,17 @@ export const createTrip = async (tripData, userId) => {
       }
     });
 
-    // 6. Registrar Auditoría del viaje creado
+    const { driver, vehicle, ...tripSnapshot } = newTrip;
+
+    // 7. Registrar Auditoría del viaje creado
     await auditService.logAudit({
       userId,
       action: 'CREATE',
       entity: 'Trip',
       entityId: newTrip.id,
-      newValues: newTrip
+      newValues: tripSnapshot,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🎫 Viaje registrado: Ticket ${newTrip.ticket}. 🛡️ Auditoría registrada.`);
@@ -240,13 +268,15 @@ export const getTripById = async (id) => {
  * @returns {Promise<Object>} El objeto viaje actualizado.
  * @throws {Error} Si el viaje no se encuentra o ya está borrado.
  */
-export const updateTrip = async (id, updateData, userId) => {
+export const updateTrip = async (id, updateData, userId, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
-    // 1. Obtener viaje actual para verificar su existencia y construir el snapshot del log de auditoría
-    const oldTrip = await tx.trip.findUnique({ 
-      where: { id, deletedAt: null } 
+    // 1. Bloqueo exclusivo de fila (FOR UPDATE) para prevenir lost updates y condiciones de carrera concurrentes
+    const [locked] = await tx.$queryRaw`SELECT id FROM trips WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Viaje no encontrado o ya ha sido eliminado');
+
+    const oldTrip = await tx.trip.findUniqueOrThrow({ 
+      where: { id } 
     });
-    if (!oldTrip) throw new Error('Viaje no encontrado o ya ha sido eliminado');
 
     // Clonar los datos recibidos y adjuntar el ID de auditoría del usuario que muta el recurso
     const dataToUpdate = { ...updateData };
@@ -255,30 +285,57 @@ export const updateTrip = async (id, updateData, userId) => {
     // 2. Parsear y homogeneizar los tipos de datos de actualización
     parseUpdateFields(dataToUpdate);
 
-    // 3. Recalcular el valor del conductor dinámicamente basado en los cambios
+    // 3. Validar vehículo y conductor activos si se están reasignando en la edición (BL-06)
+    if (dataToUpdate.vehicleId && dataToUpdate.vehicleId !== oldTrip.vehicleId) {
+      await validateActiveVehicle(tx, dataToUpdate.vehicleId);
+    }
+    if (dataToUpdate.driverId && dataToUpdate.driverId !== oldTrip.driverId) {
+      await validateActiveDriver(tx, dataToUpdate.driverId);
+    }
+
+    // 4. Sincronizar coherencia entre flags usoAcpm / usoFerry y sus importes asociados (BL-07)
+    const finalUsoAcpm = dataToUpdate.usoAcpm !== undefined ? Boolean(dataToUpdate.usoAcpm) : Boolean(oldTrip.usoAcpm);
+    const finalUsoFerry = dataToUpdate.usoFerry !== undefined ? Boolean(dataToUpdate.usoFerry) : Boolean(oldTrip.usoFerry);
+
+    if (!finalUsoAcpm) {
+      dataToUpdate.usoAcpm = false;
+      dataToUpdate.consumoAcpm = 0;
+      dataToUpdate.valorAcpm = 0.00;
+    }
+    if (!finalUsoFerry) {
+      dataToUpdate.usoFerry = false;
+      dataToUpdate.valorFerry = 0.00;
+    }
+
+    // 5. Recalcular el valor del conductor dinámicamente basado en los cambios
     const finalValorPago = dataToUpdate.valorPago !== undefined ? dataToUpdate.valorPago : Number(oldTrip.valorPago);
     const finalPorcentaje = dataToUpdate.porcentajeConductor !== undefined 
       ? dataToUpdate.porcentajeConductor 
       : oldTrip.porcentajeConductor;
     
-    const { valorConductor } = calculateConductorPay(finalValorPago, finalPorcentaje);
+    const { pct, valorConductor } = calculateConductorPay(finalValorPago, finalPorcentaje);
+    dataToUpdate.porcentajeConductor = pct;
     dataToUpdate.valorConductor = valorConductor;
 
-    // 4. Ejecutar la actualización en la base de datos
+    // 6. Ejecutar la actualización en la base de datos
     const updatedTrip = await tx.trip.update({
       where: { id },
       data: dataToUpdate,
       include: { driver: true, vehicle: true }
     });
 
-    // 5. Registrar la Auditoría correspondiente incluyendo el snapshot de oldValues y newValues
+    const { driver, vehicle, ...updatedTripSnapshot } = updatedTrip;
+
+    // 7. Registrar la Auditoría correspondiente incluyendo el snapshot simétrico de oldValues y newValues
     await auditService.logAudit({
       userId,
       action: 'UPDATE',
       entity: 'Trip',
       entityId: id,
       oldValues: oldTrip,
-      newValues: updatedTrip
+      newValues: updatedTripSnapshot,
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`✅ Viaje ${updatedTrip.ticket} actualizado exitosamente.`);
@@ -292,13 +349,16 @@ export const updateTrip = async (id, updateData, userId) => {
  * 
  * @param {string} id - UUID del viaje a dar de baja.
  * @param {string} userId - UUID del usuario que ordena la baja del flete.
+ * @param {Object} [auditMeta] - Metadatos forenses (ipAddress, userAgent).
  * @returns {Promise<Object>} Registro del viaje con la marca temporal en deletedAt.
  */
-export const deleteTrip = async (id, userId) => {
+export const deleteTrip = async (id, userId, auditMeta = {}) => {
   return await prisma.$transaction(async (tx) => {
-    // 1. Buscar existencia previa
-    const oldTrip = await tx.trip.findUnique({ where: { id } });
-    if (!oldTrip) throw new Error('Viaje no encontrado');
+    // 1. Bloqueo exclusivo de fila (FOR UPDATE) asegurando que el viaje exista y no haya sido eliminado previamente
+    const [locked] = await tx.$queryRaw`SELECT id FROM trips WHERE id = ${id}::uuid AND "deletedAt" IS NULL FOR UPDATE`;
+    if (!locked) throw new Error('Viaje no encontrado o ya ha sido eliminado');
+
+    const oldTrip = await tx.trip.findUniqueOrThrow({ where: { id } });
 
     // 2. Aplicar actualización para setear la marca de borrado y auditoría del autor
     const deletedTrip = await tx.trip.update({
@@ -316,7 +376,9 @@ export const deleteTrip = async (id, userId) => {
       entity: 'Trip',
       entityId: id,
       oldValues: oldTrip,
-      newValues: { deletedAt: deletedTrip.deletedAt }
+      newValues: { deletedAt: deletedTrip.deletedAt },
+      ipAddress: auditMeta.ipAddress,
+      userAgent: auditMeta.userAgent
     }, tx);
 
     console.log(`🗑️ Viaje ${oldTrip.ticket} eliminado.`);

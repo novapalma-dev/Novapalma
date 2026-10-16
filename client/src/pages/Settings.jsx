@@ -41,6 +41,7 @@ const Settings = () => {
     primerApellido: user?.primerApellido || '',
     correo: user?.correo || '',
     rol: user?.rol || '',
+    currentPassword: '',
     password: '',
     confirmPassword: ''
   });
@@ -68,6 +69,26 @@ const Settings = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    const fetchSystemSettings = async () => {
+      try {
+        const { data } = await api.get('/configuracion');
+        if (data) {
+          setSystemData(prev => ({ ...prev, ...data }));
+          localStorage.setItem('defaultPriceKg', data.defaultPriceKg ?? '100');
+          localStorage.setItem('defaultAcpm', data.defaultAcpm ?? '0');
+          localStorage.setItem('defaultFerry', data.defaultFerry ?? '0');
+          localStorage.setItem('defaultOrigen', data.defaultOrigen ?? '');
+          localStorage.setItem('defaultDestino', data.defaultDestino ?? '');
+          localStorage.setItem('thousandSeparator', data.thousandSeparator ?? '.');
+        }
+      } catch (err) {
+        console.error('Error al cargar configuración global:', err);
+      }
+    };
+    fetchSystemSettings();
+  }, []);
+
   // Manejar cambios en formulario de perfil
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
@@ -88,6 +109,10 @@ const Settings = () => {
 
     // Validar contraseñas si el usuario intentó ingresar una
     if (profileData.password) {
+      if (!profileData.currentPassword) {
+        setProfileError('Debes ingresar tu contraseña actual para establecer una nueva contraseña.');
+        return;
+      }
       if (profileData.password.length < 8) {
         setProfileError('La contraseña debe tener al menos 8 caracteres.');
         return;
@@ -113,6 +138,7 @@ const Settings = () => {
       };
 
       if (profileData.password) {
+        payload.currentPassword = profileData.currentPassword;
         payload.password = profileData.password;
       }
 
@@ -127,34 +153,43 @@ const Settings = () => {
       setProfileSuccess('¡Perfil y seguridad actualizados correctamente!');
       
       // Limpiar campos de contraseña
-      setProfileData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+      setProfileData(prev => ({ ...prev, currentPassword: '', password: '', confirmPassword: '' }));
     } catch (err) {
       console.error('Error al actualizar el perfil:', err);
       setProfileError(err.response?.data?.error || 'No se pudo actualizar la información del perfil.');
     }
   };
 
-  // Guardar Cambios de Configuraciones del Sistema en LocalStorage
-  const handleSystemSubmit = (e) => {
+  // Guardar Cambios de Configuraciones del Sistema en Base de Datos y LocalStorage
+  const handleSystemSubmit = async (e) => {
     e.preventDefault();
     setSystemSuccess('');
 
-    // Guardar en LocalStorage para persistencia local de carga ágil
-    localStorage.setItem('defaultPriceKg', systemData.defaultPriceKg);
-    localStorage.setItem('defaultAcpm', systemData.defaultAcpm);
-    localStorage.setItem('defaultFerry', systemData.defaultFerry);
-    localStorage.setItem('defaultOrigen', systemData.defaultOrigen);
-    localStorage.setItem('defaultDestino', systemData.defaultDestino);
-    localStorage.setItem('thousandSeparator', systemData.thousandSeparator);
+    try {
+      let savedSettings = systemData;
+      if (isAdmin()) {
+        const { data } = await api.put('/configuracion', systemData);
+        savedSettings = { ...systemData, ...data };
+        setSystemData(savedSettings);
+      }
 
-    setSystemSuccess('¡Valores del sistema y preferencias guardados correctamente!');
-    
-    // Disparar un evento para que otras pestañas o componentes se enteren si es necesario
-    window.dispatchEvent(new Event('storage'));
+      // Guardar en LocalStorage para persistencia local de carga ágil
+      localStorage.setItem('defaultPriceKg', savedSettings.defaultPriceKg);
+      localStorage.setItem('defaultAcpm', savedSettings.defaultAcpm);
+      localStorage.setItem('defaultFerry', savedSettings.defaultFerry);
+      localStorage.setItem('defaultOrigen', savedSettings.defaultOrigen);
+      localStorage.setItem('defaultDestino', savedSettings.defaultDestino);
+      localStorage.setItem('thousandSeparator', savedSettings.thousandSeparator);
 
-    setTimeout(() => {
-      setSystemSuccess('');
-    }, 4000);
+      setSystemSuccess('¡Valores del sistema y preferencias guardados correctamente!');
+      window.dispatchEvent(new Event('storage'));
+
+      setTimeout(() => {
+        setSystemSuccess('');
+      }, 4000);
+    } catch (err) {
+      console.error('Error al guardar configuración del sistema:', err);
+    }
   };
 
   return (
@@ -240,6 +275,18 @@ const Settings = () => {
                   <div className="border-top my-4 pt-3 border-secondary-subtle">
                     <h6 className="fw-bold mb-2 text-secondary">Cambiar Contraseña</h6>
                     <p className="text-muted small mb-3">Deja estos campos en blanco si no deseas cambiar tu contraseña actual.</p>
+                  </div>
+
+                  <div className="col-12">
+                    <label className="form-label small fw-semibold">Contraseña Actual</label>
+                    <input 
+                      type={showPassword ? "text" : "password"}
+                      name="currentPassword"
+                      className="form-control form-control-sm"
+                      placeholder="Requerida solo si vas a cambiar tu contraseña"
+                      value={profileData.currentPassword}
+                      onChange={handleProfileChange}
+                    />
                   </div>
 
                   <div className="col-12 col-sm-6">

@@ -386,6 +386,19 @@ const Vehicles = () => {
                         <div className="invalid-feedback">{errors.modelo}</div>
                       )}
                     </div>
+                    <div className="col-12">
+                      <label className="form-label small fw-bold">Estado Operativo</label>
+                      <select
+                        name="estado"
+                        className="form-select"
+                        value={formData.estado}
+                        onChange={handleInputChange}
+                      >
+                        <option value="DISPONIBLE">DISPONIBLE</option>
+                        <option value="EN_VIAJE">EN VIAJE</option>
+                        <option value="MANTENIMIENTO">EN MANTENIMIENTO</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div className="modal-footer bg-light">
