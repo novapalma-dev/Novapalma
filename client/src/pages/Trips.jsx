@@ -60,14 +60,24 @@ const Trips = ({ isDashboard = false }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [tripsRes, driversRes, vehiclesRes] = await Promise.all([
+      const [tripsRes, driversRes, vehiclesRes, configRes] = await Promise.all([
         api.get('/viajes'),
         api.get('/conductores'),
-        api.get('/vehiculos')
+        api.get('/vehiculos'),
+        api.get('/configuracion').catch(() => ({ data: null }))
       ]);
+      if (configRes?.data) {
+        const cfg = configRes.data;
+        localStorage.setItem('defaultPriceKg', cfg.defaultPriceKg ?? '100');
+        localStorage.setItem('defaultAcpm', cfg.defaultAcpm ?? '0');
+        localStorage.setItem('defaultFerry', cfg.defaultFerry ?? '0');
+        localStorage.setItem('defaultOrigen', cfg.defaultOrigen ?? '');
+        localStorage.setItem('defaultDestino', cfg.defaultDestino ?? '');
+        localStorage.setItem('thousandSeparator', cfg.thousandSeparator ?? '.');
+      }
       setTrips(tripsRes.data);
       setDrivers(driversRes.data);
-      setVehicles(vehiclesRes.data); // No filtering by status, late planillas are flexible!
+      setVehicles(vehiclesRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -464,6 +474,7 @@ const Trips = ({ isDashboard = false }) => {
                         type="date" 
                         name="fecha" 
                         className="form-control" 
+                        max={new Date().toISOString().split('T')[0]}
                         value={formData.fecha} 
                         onChange={handleInputChange} 
                         required 
@@ -538,7 +549,13 @@ const Trips = ({ isDashboard = false }) => {
                       <select name="vehicleId" className="form-select" value={formData.vehicleId} onChange={handleInputChange} required>
                         <option value="">Seleccione Vehículo...</option>
                         {vehicles.map(v => (
-                          <option key={v.id} value={v.id}>{v.placa} - {v.marca} ({v.capacidad} Ton)</option>
+                          <option
+                            key={v.id}
+                            value={v.id}
+                            disabled={v.estado === 'MANTENIMIENTO' && formData.vehicleId !== v.id}
+                          >
+                            {v.placa} - {v.marca} ({v.capacidad} Ton){v.estado === 'MANTENIMIENTO' ? ' [EN MANTENIMIENTO]' : ''}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -555,7 +572,8 @@ const Trips = ({ isDashboard = false }) => {
                       <input 
                         type="number" 
                         step="1" 
-                        min="0"
+                        min="1"
+                        max="60000"
                         onKeyDown={handleKeyDownPositive}
                         name="tonelaje" 
                         className="form-control fw-bold" 

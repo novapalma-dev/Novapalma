@@ -26,6 +26,9 @@ const validateActiveVehicle = async (tx, vehicleId) => {
   if (!vehicle || !vehicle.activo || vehicle.deletedAt !== null) {
     throw new Error('Vehículo no encontrado o inactivo');
   }
+  if (vehicle.estado === 'MANTENIMIENTO') {
+    throw new Error(`El vehículo ${vehicle.placa} se encuentra en MANTENIMIENTO y no puede ser asignado a viajes`);
+  }
   
   return vehicle;
 };
