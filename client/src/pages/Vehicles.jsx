@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { Plus, Search, Truck, Save, AlertCircle, Trash2, Edit, RotateCcw } from 'lucide-react';
+import { Plus, Search, Truck, Save, AlertCircle, Trash2, Edit, RotateCcw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Vehicles = () => {
@@ -11,6 +11,8 @@ const Vehicles = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const { isAdmin } = useAuth();
   const [confirmModal, setConfirmModal] = useState({
     show: false,
@@ -229,6 +231,9 @@ const Vehicles = () => {
     ? vehicles 
     : vehicles.filter(v => v.activo);
 
+  const totalPages = Math.ceil(displayedVehicles.length / pageSize) || 1;
+  const paginatedVehicles = displayedVehicles.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -244,7 +249,10 @@ const Vehicles = () => {
                 className="form-check-input cursor-pointer" 
                 id="showInactiveSwitch" 
                 checked={showInactive} 
-                onChange={(e) => setShowInactive(e.target.checked)} 
+                onChange={(e) => {
+                  setShowInactive(e.target.checked);
+                  setCurrentPage(1);
+                }} 
               />
               <label className="form-check-label small fw-bold text-secondary cursor-pointer" htmlFor="showInactiveSwitch">Mostrar Inactivos</label>
             </div>
@@ -273,10 +281,10 @@ const Vehicles = () => {
             <tbody>
               {loading ? (
                 <tr><td colSpan={isAdmin() ? 5 : 4} className="text-center py-5">Cargando flota...</td></tr>
-              ) : displayedVehicles.length === 0 ? (
+              ) : paginatedVehicles.length === 0 ? (
                 <tr><td colSpan={isAdmin() ? 5 : 4} className="text-center py-5 text-muted">No se encontraron vehículos.</td></tr>
               ) : (
-                displayedVehicles.map((v) => (
+                paginatedVehicles.map((v) => (
                   <tr key={v.id}>
                     <td className="px-4"><span className="badge bg-white text-primary border border-primary px-3 py-2">{v.placa}</span></td>
                     <td><div className="fw-bold">{v.marca}</div><div className="text-muted small">{v.modelo}</div></td>
@@ -312,6 +320,34 @@ const Vehicles = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {displayedVehicles.length > pageSize && (
+          <div className="card-footer bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <span className="small text-muted">
+              Mostrando <strong>{(currentPage - 1) * pageSize + 1}</strong> a <strong>{Math.min(currentPage * pageSize, displayedVehicles.length)}</strong> de <strong>{displayedVehicles.length}</strong> vehículos
+            </span>
+            <div className="d-flex align-items-center gap-2">
+              <button 
+                type="button" 
+                className="btn btn-sm btn-outline-secondary"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="small text-secondary px-2">Página {currentPage} de {totalPages}</span>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-outline-secondary"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (
