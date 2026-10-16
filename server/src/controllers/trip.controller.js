@@ -41,6 +41,19 @@ export const create = async (req, res) => {
  */
 export const getAll = async (req, res) => {
   try {
+    const { page, limit, search } = req.query;
+
+    // Si se especifican parámetros de paginación, retornar payload paginado optimizado
+    if (page !== undefined || limit !== undefined || search !== undefined) {
+      const result = await tripService.getTripsPaginated({
+        page: page ? parseInt(page, 10) : 1,
+        limit: limit ? parseInt(limit, 10) : 15,
+        search: typeof search === 'string' ? search : ''
+      });
+      return res.json(result);
+    }
+
+    // Compatibilidad retroactiva si no se solicitan parámetros
     const trips = await tripService.getAllTrips();
     res.json(trips);
   } catch (error) {

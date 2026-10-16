@@ -241,6 +241,81 @@ export const getAllTrips = async () => {
 };
 
 /**
+ * Obtiene viajes paginados con búsqueda y filtrado eficiente a nivel de BD.
+ * Reduce drásticamente el consumo de memoria RAM y latencia en entornos
+ * con recursos limitados (Render Free Tier 512MB).
+ * 
+ * @param {Object} options
+ * @param {number} options.page - Página solicitada (1-indexed).
+ * @param {number} options.limit - Registros por página.
+ * @param {string} options.search - Término de búsqueda opcional.
+ * @returns {Promise<{ data: Array, pagination: Object }>}
+ */
+export const getTripsPaginated = async ({ page = 1, limit = 15, search = '' } = {}) => {
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 15));
+  const skip = (pageNum - 1) * limitNum;
+
+  const where = {
+    deletedAt: null
+  };
+
+  if (search && typeof search === 'string' && search.trim() !== '') {
+    const s = search.trim();
+    const ticketNum = parseInt(s, 10);
+    const orConditions = [
+      { origen: { contains: s, mode: 'insensitive' } },
+      { destino: { contains: s, mode: 'insensitive' } },
+      { empresa: { contains: s, mode: 'insensitive' } },
+      { driver: { primerNombre: { contains: s, mode: 'insensitive' } } },
+      { driver: { primerApellido: { contains: s, mode: 'insensitive' } } },
+      { vehicle: { placa: { contains: s, mode: 'insensitive' } } }
+    ];
+
+    if (!isNaN(ticketNum)) {
+      orConditions.push({ ticket: ticketNum });
+    }
+
+    where.OR = orConditions;
+  }
+
+  const [total, trips] = await Promise.all([
+    prisma.trip.count({ where }),
+    prisma.trip.findMany({
+      where,
+      skip,
+      take: limitNum,
+      include: {
+        driver: {
+          select: { primerNombre: true, primerApellido: true, cedula: true }
+        },
+        vehicle: {
+          select: { placa: true, marca: true }
+        },
+        registradoPor: {
+          select: { primerNombre: true, primerApellido: true }
+        }
+      },
+      orderBy: { fecha: 'desc' }
+    })
+  ]);
+
+  const totalPages = Math.ceil(total / limitNum) || 1;
+
+  return {
+    data: trips,
+    pagination: {
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1
+    }
+  };
+};
+
+/**
  * Obtiene el detalle técnico y relacional de un viaje específico mediante su ID único.
  * 
  * @param {string} id - UUID identificador único del viaje.
