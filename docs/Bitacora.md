@@ -31,6 +31,11 @@
   * **BL-02:** Restricción RBAC (`adminMiddleware`) en `PUT /api/viajes/:id` (`trip.routes.js`), alineando el backend con la política de solo administradores de `Trips.jsx`.
   * **BL-03:** Bloqueo de reactivación y sobrescritura implícita de vehículos/conductores inactivos en `POST /api/vehiculos` y `POST /api/conductores`, y restricción de `includeDeleted=true` exclusivamente al rol `ADMIN`.
   * **BL-04:** Corrección del rango mensual en `dashboard.routes.js` empleando `Date.UTC` para incluir los viajes registrados el día 1 de cada mes sin desfase por zona horaria (`UTC-5`).
+* **Octubre 2026 — Remediación de Lógica de Negocio (Sesión 2: BL-05 a BL-08):**
+  * **BL-05:** Límite máximo de `porcentajeConductor` acotado a `100%` en `trip.schema.js`, `trip.service.js` y `Trips.jsx`, con redondeo a 2 decimales en `calculateConductorPay`.
+  * **BL-06:** Validación de vehículo y conductor activos (`activo: true` y `deletedAt: null`) al reasignar `vehicleId` o `driverId` durante `updateTrip`.
+  * **BL-07:** Sincronización forzada en `createTrip`, `updateTrip` y `finance.routes.js` para anular `consumoAcpm`, `valorAcpm` y `valorFerry` cuando `usoAcpm` o `usoFerry` sean `false`.
+  * **BL-08:** Sincronización del invariante `activo <-> deletedAt` en `updateVehicle` y `updateDriver`, habilitando la reactivación segura de registros dados de baja por el administrador.
 
 ---
 
