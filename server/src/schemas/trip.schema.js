@@ -14,7 +14,7 @@ export const tripSchema = z.strictObject({
   consumoAcpm: z.number().nonnegative().optional().nullable(),
   usoAcpm: z.boolean().optional().default(false),
   usoFerry: z.boolean().optional().default(false),
-  porcentajeConductor: z.number().nonnegative().optional().nullable(),
+  porcentajeConductor: z.number().min(0, 'El porcentaje del conductor no puede ser negativo').max(100, 'El porcentaje del conductor no puede superar el 100%').optional().nullable(),
   valorAcpm: z.number().nonnegative().optional().nullable(),
   valorFerry: z.number().nonnegative().optional().nullable(),
   driverId: z.string().uuid('ID de conductor inválido'),

@@ -42,15 +42,15 @@ router.get('/report', adminMiddleware, async (req, res) => {
       (acc, trip) => {
         acc.totalTons += Number(trip.tonelaje);
         acc.totalBilling += Number(trip.valorPago);
-        acc.totalAcpm += Number(trip.consumoAcpm || 0);
+        acc.totalAcpm += trip.usoAcpm ? Number(trip.consumoAcpm || 0) : 0;
         if (trip.usoFerry) {
           acc.totalFerryCrossings += 1;
         }
 
-        // Sumar costos reales en COP
+        // Sumar costos reales en COP respetando el estado lógico de usoAcpm y usoFerry
         const driverVal = Number(trip.valorConductor || 0);
-        const acpmVal = Number(trip.valorAcpm || 0);
-        const ferryVal = Number(trip.valorFerry || 0);
+        const acpmVal = trip.usoAcpm ? Number(trip.valorAcpm || 0) : 0;
+        const ferryVal = trip.usoFerry ? Number(trip.valorFerry || 0) : 0;
 
         acc.totalDriverPayout += driverVal;
         acc.totalAcpmCost += acpmVal;

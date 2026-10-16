@@ -22,8 +22,8 @@ const validateActiveVehicle = async (tx, vehicleId) => {
     where: { id: vehicleId }
   });
   
-  // Garantizar que la consulta retornó un vehículo y que su campo de vigencia (activo) es verdadero.
-  if (!vehicle || !vehicle.activo) {
+  // Garantizar que la consulta retornó un vehículo activo y sin marca de borrado lógico.
+  if (!vehicle || !vehicle.activo || vehicle.deletedAt !== null) {
     throw new Error('Vehículo no encontrado o inactivo');
   }
   
@@ -45,8 +45,8 @@ const validateActiveDriver = async (tx, driverId) => {
     where: { id: driverId }
   });
   
-  // Garantizar que la consulta retornó un conductor y que su campo de vigencia (activo) es verdadero.
-  if (!driver || !driver.activo) {
+  // Garantizar que la consulta retornó un conductor activo y sin marca de borrado lógico.
+  if (!driver || !driver.activo || driver.deletedAt !== null) {
     throw new Error('Conductor no encontrado o inactivo');
   }
   
@@ -67,9 +67,13 @@ const calculateConductorPay = (valorPago, porcentajeConductor) => {
   const pct = porcentajeConductor !== undefined && porcentajeConductor !== null 
     ? Number(porcentajeConductor) 
     : 1.00;
+
+  if (Number.isNaN(pct) || pct < 0 || pct > 100) {
+    throw new Error('El porcentaje del conductor debe estar entre 0% y 100%');
+  }
   
-  // Fórmula de comisión: Pago al conductor es el flete por el porcentaje sobre 100
-  const valorConductor = valorPago * (pct / 100);
+  // Fórmula de comisión redondeada a 2 decimales para evitar residuos IEEE 754
+  const valorConductor = Math.round(valorPago * (pct / 100) * 100) / 100;
   
   return { pct, valorConductor };
 };
@@ -99,6 +103,10 @@ const parseUpdateFields = (dataToUpdate) => {
     dataToUpdate.porcentajeConductor = Number(dataToUpdate.porcentajeConductor);
   }
   
+  if (dataToUpdate.consumoAcpm !== undefined && dataToUpdate.consumoAcpm !== null) {
+    dataToUpdate.consumoAcpm = Number(dataToUpdate.consumoAcpm);
+  }
+
   if (dataToUpdate.valorAcpm !== undefined && dataToUpdate.valorAcpm !== null) {
     dataToUpdate.valorAcpm = Number(dataToUpdate.valorAcpm);
   }
@@ -141,7 +149,20 @@ export const createTrip = async (tripData, userId) => {
     // 4. Calcular el pago al conductor (porcentaje del flete) usando helper aislado
     const { pct, valorConductor } = calculateConductorPay(valorPago, tripData.porcentajeConductor);
 
-    // 5. Crear el registro del viaje en la base de datos
+    // 5. Normalizar coherencia entre flags de uso (ACPM / Ferry) y sus importes asociados
+    const usoAcpm = Boolean(tripData.usoAcpm);
+    const usoFerry = Boolean(tripData.usoFerry);
+    const consumoAcpm = usoAcpm && tripData.consumoAcpm !== undefined && tripData.consumoAcpm !== null
+      ? Number(tripData.consumoAcpm)
+      : 0;
+    const valorAcpm = usoAcpm && tripData.valorAcpm !== undefined && tripData.valorAcpm !== null
+      ? Number(tripData.valorAcpm)
+      : 0.00;
+    const valorFerry = usoFerry && tripData.valorFerry !== undefined && tripData.valorFerry !== null
+      ? Number(tripData.valorFerry)
+      : 0.00;
+
+    // 6. Crear el registro del viaje en la base de datos
     const newTrip = await tx.trip.create({
       data: {
         ticket: Number(tripData.ticket),
@@ -152,13 +173,13 @@ export const createTrip = async (tripData, userId) => {
         producto: tripData.producto,
         tonelaje: tripData.tonelaje,
         valorPago: valorPago,
-        consumoAcpm: tripData.consumoAcpm,
-        usoAcpm: tripData.usoAcpm || false,
-        usoFerry: tripData.usoFerry || false,
+        consumoAcpm,
+        usoAcpm,
+        usoFerry,
         porcentajeConductor: pct,
         valorConductor: valorConductor,
-        valorAcpm: tripData.valorAcpm !== undefined && tripData.valorAcpm !== null ? Number(tripData.valorAcpm) : 0.00,
-        valorFerry: tripData.valorFerry !== undefined && tripData.valorFerry !== null ? Number(tripData.valorFerry) : 0.00,
+        valorAcpm,
+        valorFerry,
         driverId: tripData.driverId,
         vehicleId: tripData.vehicleId,
         registradoPorId: userId
@@ -257,16 +278,39 @@ export const updateTrip = async (id, updateData, userId) => {
     // 2. Parsear y homogeneizar los tipos de datos de actualización
     parseUpdateFields(dataToUpdate);
 
-    // 3. Recalcular el valor del conductor dinámicamente basado en los cambios
+    // 3. Validar vehículo y conductor activos si se están reasignando en la edición (BL-06)
+    if (dataToUpdate.vehicleId && dataToUpdate.vehicleId !== oldTrip.vehicleId) {
+      await validateActiveVehicle(tx, dataToUpdate.vehicleId);
+    }
+    if (dataToUpdate.driverId && dataToUpdate.driverId !== oldTrip.driverId) {
+      await validateActiveDriver(tx, dataToUpdate.driverId);
+    }
+
+    // 4. Sincronizar coherencia entre flags usoAcpm / usoFerry y sus importes asociados (BL-07)
+    const finalUsoAcpm = dataToUpdate.usoAcpm !== undefined ? Boolean(dataToUpdate.usoAcpm) : Boolean(oldTrip.usoAcpm);
+    const finalUsoFerry = dataToUpdate.usoFerry !== undefined ? Boolean(dataToUpdate.usoFerry) : Boolean(oldTrip.usoFerry);
+
+    if (!finalUsoAcpm) {
+      dataToUpdate.usoAcpm = false;
+      dataToUpdate.consumoAcpm = 0;
+      dataToUpdate.valorAcpm = 0.00;
+    }
+    if (!finalUsoFerry) {
+      dataToUpdate.usoFerry = false;
+      dataToUpdate.valorFerry = 0.00;
+    }
+
+    // 5. Recalcular el valor del conductor dinámicamente basado en los cambios
     const finalValorPago = dataToUpdate.valorPago !== undefined ? dataToUpdate.valorPago : Number(oldTrip.valorPago);
     const finalPorcentaje = dataToUpdate.porcentajeConductor !== undefined 
       ? dataToUpdate.porcentajeConductor 
       : oldTrip.porcentajeConductor;
     
-    const { valorConductor } = calculateConductorPay(finalValorPago, finalPorcentaje);
+    const { pct, valorConductor } = calculateConductorPay(finalValorPago, finalPorcentaje);
+    dataToUpdate.porcentajeConductor = pct;
     dataToUpdate.valorConductor = valorConductor;
 
-    // 4. Ejecutar la actualización en la base de datos
+    // 6. Ejecutar la actualización en la base de datos
     const updatedTrip = await tx.trip.update({
       where: { id },
       data: dataToUpdate,

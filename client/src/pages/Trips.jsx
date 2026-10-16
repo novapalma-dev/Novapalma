@@ -128,6 +128,9 @@ const Trips = ({ isDashboard = false }) => {
       if (cleanedValue !== '' && parseFloat(cleanedValue) < 0) {
         cleanedValue = '0';
       }
+      if (name === 'porcentajeConductor' && cleanedValue !== '' && parseFloat(cleanedValue) > 100) {
+        cleanedValue = '100';
+      }
       
       setFormData({
         ...formData,
@@ -510,6 +513,7 @@ const Trips = ({ isDashboard = false }) => {
                         type="number" 
                         step="0.01" 
                         min="0"
+                        max="100"
                         onKeyDown={handleKeyDownPositive}
                         name="porcentajeConductor" 
                         className="form-control" 
