@@ -36,6 +36,11 @@
   * **BL-06:** Validación de vehículo y conductor activos (`activo: true` y `deletedAt: null`) al reasignar `vehicleId` o `driverId` durante `updateTrip`.
   * **BL-07:** Sincronización forzada en `createTrip`, `updateTrip` y `finance.routes.js` para anular `consumoAcpm`, `valorAcpm` y `valorFerry` cuando `usoAcpm` o `usoFerry` sean `false`.
   * **BL-08:** Sincronización del invariante `activo <-> deletedAt` en `updateVehicle` y `updateDriver`, habilitando la reactivación segura de registros dados de baja por el administrador.
+* **Octubre 2026 — Remediación de Lógica de Negocio (Sesión 3: BL-09 a BL-12):**
+  * **BL-09:** Centralización de tarifas y parámetros por defecto del sistema mediante el endpoint `/api/configuracion` (`settings.routes.js`, `rate-tariff.schema.js`) persistido y auditado en PostgreSQL, sincronizado automáticamente en `Settings.jsx` y `Trips.jsx`.
+  * **BL-10:** Restricción de fechas futuras y límite físico de `tonelaje` (`<= 60` Ton) y `capacidad` (`<= 60` Ton) en `trip.schema.js`, `vehicle.schema.js` y `Trips.jsx`.
+  * **BL-11:** Bloqueo de asignación de viajes a vehículos en estado `MANTENIMIENTO` en `validateActiveVehicle` (`trip.service.js`) y en `Trips.jsx`, e incorporación del selector de `estado` operativo en `Vehicles.jsx`.
+  * **BL-12:** Verificación obligatoria de `currentPassword` al actualizar contraseña en `PUT /api/auth/perfil` (`auth.schema.js`, `user.service.js`, `Settings.jsx`), preservando activa la sesión actual mientras se revocan las demás sesiones.
 
 ---
 
