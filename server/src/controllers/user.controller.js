@@ -1,5 +1,6 @@
 import * as userService from '../services/user.service.js';
 import { formatError } from '../utils/errorHandler.js';
+import { getClientIp } from '../utils/network.js';
 
 /**
  * ============================================================
@@ -10,7 +11,7 @@ import { formatError } from '../utils/errorHandler.js';
  */
 
 const getAuditMeta = (req) => ({
-  ipAddress: req.ip || req.socket?.remoteAddress || null,
+  ipAddress: getClientIp(req),
   userAgent: req.get('User-Agent') || null
 });
 

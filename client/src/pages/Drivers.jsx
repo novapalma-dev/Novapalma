@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { Plus, UserCircle, Save, Trash2, Phone, CreditCard, Edit, RotateCcw } from 'lucide-react';
+import { Plus, UserCircle, Save, Trash2, Phone, CreditCard, Edit, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Drivers = () => {
@@ -11,6 +11,8 @@ const Drivers = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   const { isAdmin } = useAuth();
   const [confirmModal, setConfirmModal] = useState({
     show: false,
@@ -209,6 +211,9 @@ const Drivers = () => {
     ? drivers 
     : drivers.filter(d => d.activo);
 
+  const totalPages = Math.ceil(displayedDrivers.length / pageSize) || 1;
+  const paginatedDrivers = displayedDrivers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -224,7 +229,10 @@ const Drivers = () => {
                 className="form-check-input cursor-pointer" 
                 id="showInactiveSwitch" 
                 checked={showInactive} 
-                onChange={(e) => setShowInactive(e.target.checked)} 
+                onChange={(e) => {
+                  setShowInactive(e.target.checked);
+                  setCurrentPage(1);
+                }} 
               />
               <label className="form-check-label small fw-bold text-secondary cursor-pointer" htmlFor="showInactiveSwitch">Mostrar Inactivos</label>
             </div>
@@ -253,10 +261,10 @@ const Drivers = () => {
             <tbody>
               {loading ? (
                 <tr><td colSpan={isAdmin() ? 5 : 4} className="text-center py-5">Cargando conductores...</td></tr>
-              ) : displayedDrivers.length === 0 ? (
+              ) : paginatedDrivers.length === 0 ? (
                 <tr><td colSpan={isAdmin() ? 5 : 4} className="text-center py-5 text-muted">No se encontraron conductores.</td></tr>
               ) : (
-                displayedDrivers.map((d) => (
+                paginatedDrivers.map((d) => (
                   <tr key={d.id}>
                     <td className="px-4 fw-bold text-primary">{d.cedula}</td>
                     <td>{d.primerNombre} {d.segundoNombre} {d.primerApellido} {d.segundoApellido}</td>
@@ -288,6 +296,34 @@ const Drivers = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {displayedDrivers.length > pageSize && (
+          <div className="card-footer bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <span className="small text-muted">
+              Mostrando <strong>{(currentPage - 1) * pageSize + 1}</strong> a <strong>{Math.min(currentPage * pageSize, displayedDrivers.length)}</strong> de <strong>{displayedDrivers.length}</strong> conductores
+            </span>
+            <div className="d-flex align-items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="small text-secondary px-2">Página {currentPage} de {totalPages}</span>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (

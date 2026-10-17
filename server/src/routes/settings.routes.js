@@ -4,6 +4,7 @@ import * as auditService from '../services/audit.service.js';
 import { adminMiddleware } from '../middlewares/role.middleware.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { systemSettingsSchema } from '../schemas/rate-tariff.schema.js';
+import { getClientIp } from '../utils/network.js';
 
 const router = Router();
 
@@ -50,7 +51,7 @@ router.get('/', async (req, res) => {
  * @access  Privado (ADMIN)
  */
 router.put('/', adminMiddleware, validate(systemSettingsSchema), async (req, res) => {
-  const ipAddress = req.ip || req.socket?.remoteAddress;
+  const ipAddress = getClientIp(req);
   const userAgent = req.get('User-Agent');
 
   try {
