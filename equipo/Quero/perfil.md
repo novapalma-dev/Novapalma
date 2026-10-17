@@ -1,0 +1,3 @@
+- **Nombre:** Yesid
+- **Usuario Github:** HecmaibelQuero
+- **Rol:** Diseñadora
