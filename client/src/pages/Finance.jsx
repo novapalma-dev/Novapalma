@@ -274,15 +274,15 @@ const Finance = () => {
       </div>
 
       {/* Date Filters form - hidden during print */}
-      <div className="card p-3 border-0 shadow-sm mb-4 no-print bg-white">
+      <div className="card p-3 mb-4 no-print bg-white">
         <form onSubmit={handleFilter} className="row g-3 align-items-end">
           <div className="col-md-3">
             <label className="form-label small fw-bold text-secondary">Fecha Inicial</label>
             <div className="input-group">
-              <span className="input-group-text bg-light border-0"><Calendar size={18} /></span>
+              <span className="input-group-text bg-white border-end-0"><Calendar size={17} className="text-primary" /></span>
               <input 
                 type="date" 
-                className="form-control bg-light border-0" 
+                className="form-control border-start-0 ps-0" 
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)} 
               />
@@ -291,10 +291,10 @@ const Finance = () => {
           <div className="col-md-3">
             <label className="form-label small fw-bold text-secondary">Fecha Final</label>
             <div className="input-group">
-              <span className="input-group-text bg-light border-0"><Calendar size={18} /></span>
+              <span className="input-group-text bg-white border-end-0"><Calendar size={17} className="text-primary" /></span>
               <input 
                 type="date" 
-                className="form-control bg-light border-0" 
+                className="form-control border-start-0 ps-0" 
                 value={endDate} 
                 onChange={(e) => setEndDate(e.target.value)} 
               />
@@ -303,10 +303,10 @@ const Finance = () => {
           <div className="col-md-3">
             <label className="form-label small fw-bold text-secondary">Buscar por Tiquete</label>
             <div className="input-group">
-              <span className="input-group-text bg-light border-0"><Search size={18} className="text-muted" /></span>
+              <span className="input-group-text bg-white border-end-0"><Search size={17} className="text-primary" /></span>
               <input 
                 type="text" 
-                className="form-control bg-light border-0 ps-0" 
+                className="form-control border-start-0 ps-0" 
                 placeholder="Ej: 1045" 
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)} 
@@ -315,7 +315,7 @@ const Finance = () => {
           </div>
           <div className="col-md-3 d-flex gap-2">
             <button type="submit" className="btn btn-primary flex-grow-1 d-flex align-items-center justify-content-center gap-2">
-              <Filter size={18} /> Filtrar Fechas
+              <Filter size={17} /> Filtrar Fechas
             </button>
             <button type="button" onClick={handleReset} className="btn btn-light border">
               Limpiar
@@ -325,35 +325,35 @@ const Finance = () => {
       </div>
 
       {/* Financial Summary Cards (Screen Only) */}
-      <div className="row g-4 mb-4 no-print">
-        <div className="col-md-3">
-          <div className="card p-3 border-0 shadow-sm bg-primary text-white">
-            <small className="opacity-85 text-uppercase fw-semibold" style={{ fontSize: '15px' }}>Ingresos Totales (Flete)</small>
-            <h3 className="fw-bold mt-1 mb-0">${Number(displayedStats.totalBilling || 0).toLocaleString()}</h3>
-            <span className="small opacity-90 mt-1 d-inline-block">COP facturado</span>
+      <div className="row g-3 g-lg-4 mb-4 no-print">
+        <div className="col-sm-6 col-xl-3">
+          <div className="card kpi-card kpi-sky p-3 bg-white h-100">
+            <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>Ingresos Totales (Flete)</small>
+            <h3 className="fw-bold text-dark mt-2 mb-1 kpi-value">${Number(displayedStats.totalBilling || 0).toLocaleString()}</h3>
+            <span className="small text-muted mt-auto">COP facturado bruto</span>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card p-3 border-0 shadow-sm bg-danger text-white">
-            <small className="opacity-85 text-uppercase fw-semibold" style={{ fontSize: '15px' }}>Gastos Operativos (Total)</small>
-            <h3 className="fw-bold mt-1 mb-0">${Number(displayedStats.totalExpenses || 0).toLocaleString()}</h3>
-            <span className="small opacity-90 mt-1 d-inline-block">Conductor + ACPM + Ferry</span>
+        <div className="col-sm-6 col-xl-3">
+          <div className="card kpi-card kpi-danger p-3 bg-white h-100">
+            <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>Gastos Operativos (Total)</small>
+            <h3 className="fw-bold text-danger mt-2 mb-1 kpi-value">-${Number(displayedStats.totalExpenses || 0).toLocaleString()}</h3>
+            <span className="small text-muted mt-auto">Conductor + ACPM + Ferry</span>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card p-3 border-0 shadow-sm bg-success text-white">
-            <small className="opacity-85 text-uppercase fw-semibold" style={{ fontSize: '15px' }}>Utilidad Neta (Neto)</small>
-            <h3 className="fw-bold mt-1 mb-0">${Number(displayedStats.totalNet || 0).toLocaleString()}</h3>
-            <span className="small opacity-90 mt-1 d-inline-block">COP rentabilidad real</span>
+        <div className="col-sm-6 col-xl-3">
+          <div className="card kpi-card p-3 bg-white h-100">
+            <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>Utilidad Neta (Neto)</small>
+            <h3 className="fw-bold text-success mt-2 mb-1 kpi-value">${Number(displayedStats.totalNet || 0).toLocaleString()}</h3>
+            <span className="small text-muted mt-auto">COP rentabilidad real</span>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card p-3 border-0 shadow-sm bg-dark text-white">
-            <small className="opacity-85 text-uppercase fw-semibold" style={{ fontSize: '15px' }}>Desglose de Gastos</small>
-            <div className="mt-1 small" style={{ fontSize: '12px' }}>
-              <div className="d-flex justify-content-between"><span>Conductor:</span> <span className="fw-bold">${Number(displayedStats.totalDriverPayout || 0).toLocaleString()}</span></div>
-              <div className="d-flex justify-content-between"><span>ACPM:</span> <span className="fw-bold">${Number(displayedStats.totalAcpmCost || 0).toLocaleString()}</span></div>
-              <div className="d-flex justify-content-between"><span>Ferry:</span> <span className="fw-bold">${Number(displayedStats.totalFerryCost || 0).toLocaleString()}</span></div>
+        <div className="col-sm-6 col-xl-3">
+          <div className="card kpi-card kpi-amber p-3 bg-white h-100">
+            <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>Desglose de Gastos</small>
+            <div className="mt-2 small font-mono-num" style={{ fontSize: '12px' }}>
+              <div className="d-flex justify-content-between mb-1"><span className="text-muted">Conductor:</span> <span className="fw-bold text-dark">${Number(displayedStats.totalDriverPayout || 0).toLocaleString()}</span></div>
+              <div className="d-flex justify-content-between mb-1"><span className="text-muted">ACPM:</span> <span className="fw-bold text-dark">${Number(displayedStats.totalAcpmCost || 0).toLocaleString()}</span></div>
+              <div className="d-flex justify-content-between"><span className="text-muted">Ferry:</span> <span className="fw-bold text-dark">${Number(displayedStats.totalFerryCost || 0).toLocaleString()}</span></div>
             </div>
           </div>
         </div>
@@ -450,27 +450,27 @@ const Finance = () => {
 
                   return (
                     <tr key={t.id}>
-                      <td className="px-4 fw-bold text-primary">#{t.ticket}</td>
-                      <td>{new Date(t.fecha).toLocaleDateString(undefined, { timeZone: 'UTC' })}</td>
-                      <td><span className="badge bg-light text-dark border">{t.vehicle?.placa}</span></td>
+                      <td className="px-4"><span className="ticket-badge">#{t.ticket}</span></td>
+                      <td className="font-mono-num small">{new Date(t.fecha).toLocaleDateString(undefined, { timeZone: 'UTC' })}</td>
+                      <td><span className="plate-badge">{t.vehicle?.placa}</span></td>
                       <td className="small fw-medium">
                         {t.origen} 
                         {t.destino ? <span className="text-secondary"> &rarr; {t.destino}</span> : ''}
                       </td>
                       <td className="text-muted small">{t.empresa || 'N/A'}</td>
                       <td>
-                        <span className={`badge px-2 py-1 rounded-pill ${t.producto === 'FRUTO' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis'}`}>
+                        <span className={`badge px-2.5 py-1 rounded-pill ${t.producto === 'FRUTO' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis'}`}>
                           {t.producto}
                         </span>
                       </td>
-                      <td>{t.tonelaje} Ton</td>
-                      <td className="text-danger small">${acpmVal.toLocaleString()}</td>
-                      <td className="text-danger small">${ferryVal.toLocaleString()}</td>
-                      <td className="text-success small fw-medium">
+                      <td className="font-mono-num fw-medium small">{t.tonelaje} Ton</td>
+                      <td className="text-danger small font-mono-num">${acpmVal.toLocaleString()}</td>
+                      <td className="text-danger small font-mono-num">${ferryVal.toLocaleString()}</td>
+                      <td className="text-success small fw-medium font-mono-num">
                         ${driverVal.toLocaleString()} <small className="text-muted">({Number(t.porcentajeConductor || 1.0)}%)</small>
                       </td>
-                      <td className="text-danger small fw-semibold">${totalExpenses.toLocaleString()}</td>
-                      <td className="fw-bold px-4 text-end text-dark">${Number(t.valorPago).toLocaleString()}</td>
+                      <td className="text-danger small fw-semibold font-mono-num">${totalExpenses.toLocaleString()}</td>
+                      <td className="fw-bold px-4 text-end text-dark font-mono-num">${Number(t.valorPago).toLocaleString()}</td>
                     </tr>
                   );
                 })
@@ -595,11 +595,14 @@ const Finance = () => {
           }
 
           /* Desactivar insignias coloreadas llamativas en favor de texto plano serio */
-          .table td .badge {
+          .table td .badge,
+          .table td .ticket-badge,
+          .table td .plate-badge {
             background-color: transparent !important;
             color: #0f172a !important;
             padding: 0 !important;
             border: none !important;
+            box-shadow: none !important;
             font-size: 8px !important;
             font-weight: normal !important;
           }

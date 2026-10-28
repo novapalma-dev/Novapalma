@@ -4,15 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, 
   TrendingDown, 
-  MapPin, 
   UserCircle, 
   Truck, 
   Scale, 
   DollarSign, 
   Calendar, 
-  Filter, 
   RefreshCw,
-  Award
+  Award,
+  ArrowUpRight
 } from 'lucide-react';
 import Trips from './Trips';
 
@@ -161,8 +160,8 @@ const Dashboard = () => {
   // 4. Agrupación por Producto (Dona de Tipo de Fruto)
   const getProductData = () => {
     const productMap = {
-      FRUTO: { name: 'Fruto de Palma', value: 0, color: '#198754' },
-      COMPOST: { name: 'Compost Orgánico', value: 0, color: '#ffc107' }
+      FRUTO: { name: 'Fruto de Palma', value: 0, color: '#10b981' },
+      COMPOST: { name: 'Compost Orgánico', value: 0, color: '#f59e0b' }
     };
 
     filteredTrips.forEach(t => {
@@ -209,7 +208,7 @@ const Dashboard = () => {
       companyMap[company] += 1;
     });
 
-    const colors = ['#0d6efd', '#198754', '#ffc107', '#6c757d', '#0dcaf0'];
+    const colors = ['#0d6e47', '#10b981', '#f59e0b', '#0284c7', '#6366f1'];
     const totalCompanyTrips = Object.values(companyMap).reduce((sum, c) => sum + c, 0);
 
     return Object.entries(companyMap)
@@ -266,8 +265,8 @@ const Dashboard = () => {
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="pe-none">
         <defs>
           <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0d6efd" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#0d6efd" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
           </linearGradient>
         </defs>
         
@@ -277,15 +276,15 @@ const Dashboard = () => {
           const value = maxTons * (1 - ratio);
           return (
             <g key={index}>
-              <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#f0f0f0" strokeDasharray="4" />
-              <text x={padding - 5} y={y + 4} fill="#a0a0a0" fontSize="10" textAnchor="end">{Math.round(value)}</text>
+              <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="var(--border-color)" strokeDasharray="4" />
+              <text x={padding - 6} y={y + 4} fill="var(--text-muted)" fontSize="10" textAnchor="end">{Math.round(value)}</text>
             </g>
           );
         })}
 
         {/* Eje X Etiquetas */}
         {monthlyEvolutionData.map((d, i) => (
-          <text key={i} x={getX(i)} y={height - 10} fill="#808080" fontSize="10" textAnchor="middle">
+          <text key={i} x={getX(i)} y={height - 10} fill="var(--text-muted)" fontSize="10" textAnchor="middle">
             {d.label}
           </text>
         ))}
@@ -294,15 +293,15 @@ const Dashboard = () => {
         {monthlyEvolutionData.length > 1 && (
           <>
             <path d={areaPath} fill="url(#areaGradient)" />
-            <path d={linePath} fill="none" stroke="#0d6efd" strokeWidth="2.5" />
+            <path d={linePath} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </>
         )}
 
         {/* Puntos de Datos */}
         {monthlyEvolutionData.map((d, i) => (
           <g key={i}>
-            <circle cx={getX(i)} cy={getY(d.tons)} r="4" fill="#0d6efd" stroke="#ffffff" strokeWidth="1.5" className="pe-auto" style={{ cursor: 'pointer' }} />
-            <text x={getX(i)} y={getY(d.tons) - 8} fill="#495057" fontSize="9" fontWeight="bold" textAnchor="middle">
+            <circle cx={getX(i)} cy={getY(d.tons)} r="4.5" fill="#0d6e47" stroke="#ffffff" strokeWidth="1.5" className="pe-auto" style={{ cursor: 'pointer' }} />
+            <text x={getX(i)} y={getY(d.tons) - 9} fill="var(--text-main)" fontSize="9.5" fontWeight="700" textAnchor="middle">
               {d.tons > 0 ? `${d.tons.toFixed(1)} T` : ''}
             </text>
           </g>
@@ -310,6 +309,7 @@ const Dashboard = () => {
       </svg>
     );
   };
+
   // Renderizador de gráfico de dona (Donut) en SVG
   const renderDonutChart = (data, totalValueLabel) => {
     const size = 180;
@@ -325,13 +325,12 @@ const Dashboard = () => {
         <div style={{ position: 'relative', width: size, height: size }}>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             {/* Círculo de fondo */}
-            <circle cx={center} cy={center} r={radius} fill="none" stroke="#f8f9fa" strokeWidth={strokeWidth} />
+            <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--bg-subtle)" strokeWidth={strokeWidth} />
             
             {/* Segmentos de Dona */}
             {data.map((item, index) => {
               if (item.percentage === 0) return null;
               const strokeLength = (item.percentage / 100) * circumference;
-              // El offset acumulado debe ser negativo para desplazar el inicio en sentido horario
               const strokeOffset = - (accumulatedPercentage / 100) * circumference;
               accumulatedPercentage += item.percentage;
 
@@ -361,7 +360,7 @@ const Dashboard = () => {
             pointerEvents: 'none'
           }}>
             <small className="text-secondary text-uppercase fw-bold" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Total</small>
-            <h6 className="m-0 fw-bold text-dark" style={{ fontSize: '14px' }}>{totalValueLabel}</h6>
+            <h6 className="m-0 fw-bold text-dark font-mono-num" style={{ fontSize: '14px' }}>{totalValueLabel}</h6>
           </div>
         </div>
 
@@ -371,8 +370,8 @@ const Dashboard = () => {
             <div key={index} className="d-flex align-items-start gap-2">
               <span className="rounded-circle d-inline-block mt-1" style={{ width: '10px', height: '10px', backgroundColor: item.color, flexShrink: 0 }}></span>
               <div>
-                <p className="m-0 small text-dark fw-medium" style={{ fontSize: '11px', lineHeight: '1.2' }}>{item.name}</p>
-                <small className="text-muted" style={{ fontSize: '10px' }}>
+                <p className="m-0 small text-dark fw-semibold" style={{ fontSize: '11.5px', lineHeight: '1.2' }}>{item.name}</p>
+                <small className="text-muted font-mono-num" style={{ fontSize: '10.5px' }}>
                   {item.percentage.toFixed(1)}% ({Math.round(item.value).toLocaleString()})
                 </small>
               </div>
@@ -384,74 +383,77 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container-fluid py-2">
-      {/* Header section with operational title */}
-      <div className="row mb-4 align-items-center">
-        <div className="col-lg-6">
-          <h3 className="fw-bold mb-1 text-dark">Estudio de Resultados y Análisis de Flota</h3>
-          <p className="text-muted small mb-0">Visualización avanzada de métricas, tendencias y rendimiento operativo en tiempo real.</p>
-        </div>
-        
-        {/* Dynamic Filters Form */}
-        <div className="col-lg-6 mt-3 mt-lg-0">
-          <div className="d-flex flex-wrap gap-2 justify-content-lg-end align-items-center">
-            {/* Conductor dropdown */}
-            <div className="input-group input-group-sm" style={{ width: '200px' }}>
-              <span className="input-group-text bg-white border-end-0"><UserCircle size={16} className="text-secondary" /></span>
-              <select 
-                className="form-select border-start-0 ps-0 text-truncate"
-                value={selectedDriver}
-                onChange={(e) => setSelectedDriver(e.target.value)}
+    <div className="container-fluid py-1">
+      {/* Header & Barra de Filtros Operativos */}
+      <div className="card p-3 mb-4 bg-white">
+        <div className="row align-items-center g-3">
+          <div className="col-lg-5">
+            <h5 className="fw-bold mb-1 text-dark">Estudio de Resultados y Análisis de Flota</h5>
+            <p className="text-muted small mb-0">Métricas consolidadas de pesaje, fletes y rendimiento por conductor.</p>
+          </div>
+          
+          {/* Dynamic Filters Form */}
+          <div className="col-lg-7">
+            <div className="d-flex flex-wrap gap-2 justify-content-lg-end align-items-center">
+              {/* Conductor dropdown */}
+              <div className="input-group input-group-sm" style={{ width: '195px' }}>
+                <span className="input-group-text bg-white border-end-0"><UserCircle size={15} className="text-primary" /></span>
+                <select 
+                  className="form-select border-start-0 ps-0 text-truncate"
+                  value={selectedDriver}
+                  onChange={(e) => setSelectedDriver(e.target.value)}
+                  style={{ fontSize: '12px' }}
+                >
+                  <option value="">Todos los Conductores</option>
+                  {drivers.map(d => (
+                    <option key={d.id} value={d.id}>{d.primerNombre} {d.primerApellido}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date range filter */}
+              <div className="input-group input-group-sm" style={{ width: '148px' }}>
+                <span className="input-group-text bg-white border-end-0"><Calendar size={15} className="text-primary" /></span>
+                <input 
+                  type="date" 
+                  className="form-control border-start-0 ps-0" 
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  title="Fecha Inicial"
+                  style={{ fontSize: '11px' }}
+                />
+              </div>
+              <div className="input-group input-group-sm" style={{ width: '148px' }}>
+                <span className="input-group-text bg-white border-end-0"><Calendar size={15} className="text-primary" /></span>
+                <input 
+                  type="date" 
+                  className="form-control border-start-0 ps-0" 
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  title="Fecha Final"
+                  style={{ fontSize: '11px' }}
+                />
+              </div>
+
+              {/* Reset button */}
+              <button 
+                onClick={handleResetFilters} 
+                className="btn btn-light border btn-sm d-flex align-items-center gap-1"
+                title="Limpiar filtros"
+              >
+                <RefreshCw size={13} /> Limpiar
+              </button>
+
+              {/* Complete history button redirecting to main /viajes */}
+              <button 
+                onClick={() => navigate('/viajes')} 
+                className="btn btn-primary btn-sm d-flex align-items-center gap-1"
                 style={{ fontSize: '12px' }}
               >
-                <option value="">Todos los Conductores</option>
-                {drivers.map(d => (
-                  <option key={d.id} value={d.id}>{d.primerNombre} {d.primerApellido}</option>
-                ))}
-              </select>
+                <span>Historial Completo</span>
+                <ArrowUpRight size={14} />
+              </button>
             </div>
-
-            {/* Date range filter */}
-            <div className="input-group input-group-sm" style={{ width: '150px' }}>
-              <span className="input-group-text bg-white border-end-0"><Calendar size={16} className="text-secondary" /></span>
-              <input 
-                type="date" 
-                className="form-control border-start-0 ps-0" 
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                title="Fecha Inicial"
-                style={{ fontSize: '11px' }}
-              />
-            </div>
-            <div className="input-group input-group-sm" style={{ width: '150px' }}>
-              <span className="input-group-text bg-white border-end-0"><Calendar size={16} className="text-secondary" /></span>
-              <input 
-                type="date" 
-                className="form-control border-start-0 ps-0" 
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                title="Fecha Final"
-                style={{ fontSize: '11px' }}
-              />
-            </div>
-
-            {/* Reset button */}
-            <button 
-              onClick={handleResetFilters} 
-              className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
-              title="Limpiar filtros"
-            >
-              <RefreshCw size={14} /> Limpiar
-            </button>
-
-            {/* Complete history button redirecting to main /viajes */}
-            <button 
-              onClick={() => navigate('/viajes')} 
-              className="btn btn-primary btn-sm"
-              style={{ fontSize: '12px' }}
-            >
-              Historial Completo
-            </button>
           </div>
         </div>
       </div>
@@ -459,118 +461,118 @@ const Dashboard = () => {
       {/* ============================================================
           METRIC SUMMARY CARDS WITH BEAUTIFUL TREND INDICATORS
           ============================================================ */}
-      <div className="row g-4 mb-4">
+      <div className="row g-3 g-lg-4 mb-4">
         {/* Card 1: Total Tonelaje */}
-        <div className="col-md-3">
-          <div className="card border-0 shadow-sm p-3 bg-white h-100 position-relative overflow-hidden transition-hover">
+        <div className="col-sm-6 col-xl-3">
+          <div className="card kpi-card p-3 bg-white h-100">
             <div className="d-flex align-items-center justify-content-between mb-2">
-              <span className="text-muted small fw-bold text-uppercase" style={{ letterSpacing: '0.5px' }}>Total Tonelaje</span>
-              <div className="bg-success-subtle p-2 rounded text-success">
-                <Scale size={20} />
+              <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>Total Tonelaje</span>
+              <div className="bg-success-subtle p-2 rounded-3 text-success">
+                <Scale size={19} />
               </div>
             </div>
-            <h3 className="fw-bold text-dark mb-1">{totalTons.toLocaleString(undefined, { maximumFractionDigits: 1 })} Ton</h3>
-            <div className="d-flex align-items-center gap-1 mt-auto">
+            <h3 className="fw-bold text-dark mb-1 kpi-value">{totalTons.toLocaleString(undefined, { maximumFractionDigits: 1 })} Ton</h3>
+            <div className="d-flex align-items-center gap-1.5 mt-auto pt-1">
               {tonTrend.isPositive ? (
-                <span className="text-success small fw-semibold d-flex align-items-center gap-0.5">
-                  <TrendingUp size={14} /> &uarr; {tonTrend.percent}%
+                <span className="badge bg-success-subtle text-success fw-semibold d-inline-flex align-items-center gap-1">
+                  <TrendingUp size={12} /> &uarr; {tonTrend.percent}%
                 </span>
               ) : (
-                <span className="text-danger small fw-semibold d-flex align-items-center gap-0.5">
-                  <TrendingDown size={14} /> &darr; {tonTrend.percent}%
+                <span className="badge bg-danger-subtle text-danger fw-semibold d-inline-flex align-items-center gap-1">
+                  <TrendingDown size={12} /> &darr; {tonTrend.percent}%
                 </span>
               )}
-              <span className="text-muted small" style={{ fontSize: '10px' }}>vs Mes Anterior</span>
+              <span className="text-muted" style={{ fontSize: '11px' }}>vs 30 días ant.</span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Viajes Completados */}
-        <div className="col-md-3">
-          <div className="card border-0 shadow-sm p-3 bg-white h-100 position-relative overflow-hidden transition-hover">
+        <div className="col-sm-6 col-xl-3">
+          <div className="card kpi-card kpi-sky p-3 bg-white h-100">
             <div className="d-flex align-items-center justify-content-between mb-2">
-              <span className="text-muted small fw-bold text-uppercase" style={{ letterSpacing: '0.5px' }}>Viajes Completados</span>
-              <div className="bg-primary-subtle p-2 rounded text-primary">
-                <Truck size={20} />
+              <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>Viajes Completados</span>
+              <div className="bg-primary-subtle p-2 rounded-3 text-primary">
+                <Truck size={19} />
               </div>
             </div>
-            <h3 className="fw-bold text-dark mb-1">{totalTripsCount}</h3>
-            <div className="d-flex align-items-center gap-1 mt-auto">
+            <h3 className="fw-bold text-dark mb-1 kpi-value">{totalTripsCount}</h3>
+            <div className="d-flex align-items-center gap-1.5 mt-auto pt-1">
               {tripsTrend.isPositive ? (
-                <span className="text-success small fw-semibold d-flex align-items-center gap-0.5">
-                  <TrendingUp size={14} /> &uarr; {tripsTrend.percent}%
+                <span className="badge bg-success-subtle text-success fw-semibold d-inline-flex align-items-center gap-1">
+                  <TrendingUp size={12} /> &uarr; {tripsTrend.percent}%
                 </span>
               ) : (
-                <span className="text-danger small fw-semibold d-flex align-items-center gap-0.5">
-                  <TrendingDown size={14} /> &darr; {tripsTrend.percent}%
+                <span className="badge bg-danger-subtle text-danger fw-semibold d-inline-flex align-items-center gap-1">
+                  <TrendingDown size={12} /> &darr; {tripsTrend.percent}%
                 </span>
               )}
-              <span className="text-muted small" style={{ fontSize: '10px' }}>vs Mes Anterior</span>
+              <span className="text-muted" style={{ fontSize: '11px' }}>vs 30 días ant.</span>
             </div>
           </div>
         </div>
 
         {/* Card 3: Eficiencia de Carga */}
-        <div className="col-md-3">
-          <div className="card border-0 shadow-sm p-3 bg-white h-100 position-relative overflow-hidden transition-hover">
+        <div className="col-sm-6 col-xl-3">
+          <div className="card kpi-card p-3 bg-white h-100">
             <div className="d-flex align-items-center justify-content-between mb-2">
-              <span className="text-muted small fw-bold text-uppercase" style={{ letterSpacing: '0.5px' }}>Eficiencia de Carga</span>
-              <div className="bg-info-subtle p-2 rounded text-info">
-                <Award size={20} />
+              <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>Eficiencia de Carga</span>
+              <div className="bg-info-subtle p-2 rounded-3 text-info">
+                <Award size={19} />
               </div>
             </div>
-            <h3 className="fw-bold text-dark mb-1">{averageTonsPerTrip.toFixed(1)} Ton/viaje</h3>
-            <div className="d-flex align-items-center gap-1 mt-auto">
+            <h3 className="fw-bold text-dark mb-1 kpi-value">{averageTonsPerTrip.toFixed(1)} Ton/viaje</h3>
+            <div className="d-flex align-items-center gap-1.5 mt-auto pt-1">
               {efficiencyTrend.isPositive ? (
-                <span className="text-success small fw-semibold d-flex align-items-center gap-0.5">
-                  <TrendingUp size={14} /> &uarr; {efficiencyTrend.percent}%
+                <span className="badge bg-success-subtle text-success fw-semibold d-inline-flex align-items-center gap-1">
+                  <TrendingUp size={12} /> &uarr; {efficiencyTrend.percent}%
                 </span>
               ) : (
-                <span className="text-danger small fw-semibold d-flex align-items-center gap-0.5">
-                  <TrendingDown size={14} /> &darr; {efficiencyTrend.percent}%
+                <span className="badge bg-danger-subtle text-danger fw-semibold d-inline-flex align-items-center gap-1">
+                  <TrendingDown size={12} /> &darr; {efficiencyTrend.percent}%
                 </span>
               )}
-              <span className="text-muted small" style={{ fontSize: '10px' }}>vs Mes Anterior</span>
+              <span className="text-muted" style={{ fontSize: '11px' }}>vs 30 días ant.</span>
             </div>
           </div>
         </div>
 
         {/* Card 4: Valor Total Facturado */}
-        <div className="col-md-3">
-          <div className="card border-0 shadow-sm p-3 bg-white h-100 position-relative overflow-hidden transition-hover">
+        <div className="col-sm-6 col-xl-3">
+          <div className="card kpi-card kpi-amber p-3 bg-white h-100">
             <div className="d-flex align-items-center justify-content-between mb-2">
-              <span className="text-muted small fw-bold text-uppercase" style={{ letterSpacing: '0.5px' }}>Valor Total Flete</span>
-              <div className="bg-warning-subtle p-2 rounded text-warning-emphasis">
-                <DollarSign size={20} />
+              <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>Valor Total Flete</span>
+              <div className="bg-warning-subtle p-2 rounded-3 text-warning-emphasis">
+                <DollarSign size={19} />
               </div>
             </div>
-            <h3 className="fw-bold text-dark mb-1">${totalBilling.toLocaleString()}</h3>
-            <div className="d-flex align-items-center gap-1 mt-auto">
+            <h3 className="fw-bold text-dark mb-1 kpi-value">${totalBilling.toLocaleString()}</h3>
+            <div className="d-flex align-items-center gap-1.5 mt-auto pt-1">
               {billingTrend.isPositive ? (
-                <span className="text-success small fw-semibold d-flex align-items-center gap-0.5">
-                  <TrendingUp size={14} /> &uarr; {billingTrend.percent}%
+                <span className="badge bg-success-subtle text-success fw-semibold d-inline-flex align-items-center gap-1">
+                  <TrendingUp size={12} /> &uarr; {billingTrend.percent}%
                 </span>
               ) : (
-                <span className="text-danger small fw-semibold d-flex align-items-center gap-0.5">
-                  <TrendingDown size={14} /> &darr; {billingTrend.percent}%
+                <span className="badge bg-danger-subtle text-danger fw-semibold d-inline-flex align-items-center gap-1">
+                  <TrendingDown size={12} /> &darr; {billingTrend.percent}%
                 </span>
               )}
-              <span className="text-muted small" style={{ fontSize: '10px' }}>vs Mes Anterior</span>
+              <span className="text-muted" style={{ fontSize: '11px' }}>vs 30 días ant.</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* ============================================================
-          INTERACTIVE POWER BI-STYLE GRAPHICS GRID (2 ROWS x 2 COLS)
+          INTERACTIVE GRAPHICS GRID (2 ROWS x 2 COLS)
           ============================================================ */}
       <div className="row g-4 mb-4">
         {/* Chart 1: Evolución Mensual */}
         <div className="col-lg-6">
-          <div className="card border-0 shadow-sm p-4 bg-white h-100">
-            <h5 className="fw-bold text-dark mb-1">Evolución Mensual de Carga (Tonelaje)</h5>
-            <p className="text-muted small mb-3">Historial acumulado de volumen transportado por mes.</p>
-            <div className="flex-grow-1 d-flex align-items-center justify-content-center" style={{ minHeight: '180px' }}>
+          <div className="card p-4 bg-white h-100">
+            <h5 className="fw-bold text-dark mb-1" style={{ fontSize: '1.05rem' }}>Evolución Mensual de Carga (Tonelaje)</h5>
+            <p className="text-muted small mb-3">Historial acumulado de volumen transportado en báscula por mes.</p>
+            <div className="flex-grow-1 d-flex align-items-center justify-content-center" style={{ minHeight: '185px' }}>
               {renderLineChart()}
             </div>
           </div>
@@ -578,10 +580,10 @@ const Dashboard = () => {
 
         {/* Chart 2: Composición por Fruto */}
         <div className="col-lg-6">
-          <div className="card border-0 shadow-sm p-4 bg-white h-100">
-            <h5 className="fw-bold text-dark mb-1">Composición de Carga (Tonelaje)</h5>
-            <p className="text-muted small mb-3">Desglose porcentual del tipo de carga y abonos.</p>
-            <div className="flex-grow-1 d-flex align-items-center justify-content-center" style={{ minHeight: '180px' }}>
+          <div className="card p-4 bg-white h-100">
+            <h5 className="fw-bold text-dark mb-1" style={{ fontSize: '1.05rem' }}>Composición de Carga (Tonelaje)</h5>
+            <p className="text-muted small mb-3">Desglose porcentual entre fruto de palma aceitera y compost orgánico.</p>
+            <div className="flex-grow-1 d-flex align-items-center justify-content-center" style={{ minHeight: '185px' }}>
               {renderDonutChart(productData, `${totalTons.toLocaleString(undefined, { maximumFractionDigits: 0 })} T`)}
             </div>
           </div>
@@ -591,9 +593,9 @@ const Dashboard = () => {
       <div className="row g-4 mb-4">
         {/* Chart 3: Top 5 Conductores */}
         <div className="col-lg-6">
-          <div className="card border-0 shadow-sm p-4 bg-white h-100">
-            <h5 className="fw-bold text-dark mb-1">Top 5 Conductores por Tonelaje</h5>
-            <p className="text-muted small mb-3">Ranking de transportistas ordenado por volumen de carga.</p>
+          <div className="card p-4 bg-white h-100">
+            <h5 className="fw-bold text-dark mb-1" style={{ fontSize: '1.05rem' }}>Top 5 Conductores por Tonelaje</h5>
+            <p className="text-muted small mb-3">Ranking operativo de transportistas ordenado por volumen movilizado.</p>
             <div className="d-flex flex-column gap-3 mt-2">
               {loading ? (
                 <div className="text-center py-4 text-muted">Cargando ranking...</div>
@@ -603,19 +605,23 @@ const Dashboard = () => {
                 topDrivers.map((driver, index) => {
                   const maxTons = topDrivers[0]?.value || 1;
                   const pct = (driver.value / maxTons) * 100;
-                  const colors = ['bg-primary', 'bg-success', 'bg-info', 'bg-warning', 'bg-secondary'];
+                  const barColors = ['#0d6e47', '#10b981', '#f59e0b', '#0284c7', '#64748b'];
 
                   return (
                     <div key={index}>
                       <div className="d-flex justify-content-between mb-1 small fw-semibold">
                         <span className="text-dark">{index + 1}. {driver.name}</span>
-                        <span className="text-secondary">{driver.value.toLocaleString(undefined, { maximumFractionDigits: 1 })} Ton</span>
+                        <span className="text-secondary font-mono-num">{driver.value.toLocaleString(undefined, { maximumFractionDigits: 1 })} Ton</span>
                       </div>
-                      <div className="progress" style={{ height: '10px', borderRadius: '50px' }}>
+                      <div className="progress" style={{ height: '9px', borderRadius: '50px' }}>
                         <div 
-                          className={`progress-bar ${colors[index % colors.length]} rounded-pill`} 
+                          className="progress-bar rounded-pill" 
                           role="progressbar" 
-                          style={{ width: `${pct}%`, transition: 'width 1s ease' }} 
+                          style={{ 
+                            width: `${pct}%`, 
+                            backgroundColor: barColors[index % barColors.length],
+                            transition: 'width 0.8s ease' 
+                          }} 
                           aria-valuenow={pct} 
                           aria-valuemin="0" 
                           aria-valuemax="100"
@@ -631,10 +637,10 @@ const Dashboard = () => {
 
         {/* Chart 4: Distribución de Viajes por Planta/Empresa */}
         <div className="col-lg-6">
-          <div className="card border-0 shadow-sm p-4 bg-white h-100">
-            <h5 className="fw-bold text-dark mb-1">Distribución de Viajes por Empresa</h5>
+          <div className="card p-4 bg-white h-100">
+            <h5 className="fw-bold text-dark mb-1" style={{ fontSize: '1.05rem' }}>Distribución de Viajes por Empresa</h5>
             <p className="text-muted small mb-3">Concentración logística por cliente o planta extractora destino.</p>
-            <div className="flex-grow-1 d-flex align-items-center justify-content-center" style={{ minHeight: '180px' }}>
+            <div className="flex-grow-1 d-flex align-items-center justify-content-center" style={{ minHeight: '185px' }}>
               {renderDonutChart(companyData, `${totalTripsCount} Viajes`)}
             </div>
           </div>
@@ -646,22 +652,11 @@ const Dashboard = () => {
           ============================================================ */}
       <div className="row mt-4">
         <div className="col-12">
-          <div className="card p-4 border-0 shadow-sm bg-white">
+          <div className="card p-4 bg-white">
             <Trips isDashboard={true} />
           </div>
         </div>
       </div>
-
-      {/* Dynamic Hover Transitions styling */}
-      <style>{`
-        .transition-hover {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .transition-hover:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
-        }
-      `}</style>
     </div>
   );
 };
