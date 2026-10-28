@@ -1,0 +1,4 @@
+- **Nombre:** Jose Silva
+- **Usuario GitHub:** josesilvait
+- **Rol:** Scrum Master
+- **MVP:** Organización ágil a través de Trello o Jira
