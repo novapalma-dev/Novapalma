@@ -1,838 +1,1911 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Novapalma 🌴 | Póster Digital & Plataforma Logística · UPC Aguachica</title>
-  <meta name="description" content="Proyecto de Ingeniería de Sistemas para la XV Feria de Emprendimiento UPC Emprende 2026. Plataforma de gestión logística, financiera y trazabilidad para el transporte de fruto de palma.">
-  
-  <!-- Favicon -->
+  <title>Novapalma — Sistema de Gestión Logística y Pesaje para Transporte de Palma · UPC Aguachica</title>
+  <meta name="description" content="Proyecto de Ingeniería de Sistemas para la XV Feria de Emprendimiento UPC Emprende. Plataforma web PERN para el control de viajes, pesaje en báscula, flota y liquidación contable en Pelaya, Cesar.">
   <link rel="icon" type="image/png" href="assets/logo.png">
 
-  <!-- Google Fonts -->
+  <!-- Tipografías: Plus Jakarta Sans (Estructura), Newsreader (Editorial), JetBrains Mono (Datos y Báscula) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            display: ['Outfit', 'sans-serif'],
-            body: ['Plus Jakarta Sans', 'sans-serif'],
-          },
-          colors: {
-            palm: {
-              50: '#f0fdf4',
-              100: '#dcfce7',
-              200: '#bbf7d0',
-              300: '#86efac',
-              400: '#4ade80',
-              500: '#22c55e',
-              600: '#16a34a',
-              700: '#15803d',
-              800: '#166534',
-              900: '#14532d',
-              950: '#052e16',
-            },
-            upc: {
-              blue: '#0284c7',
-              green: '#15803d',
-              yellow: '#eab308'
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      /* Paleta Editorial Agroindustrial (Papel Técnico + Tinta Botánica + Ámbar Báscula) */
+      --bg-paper: #f4f1ea;
+      --bg-surface: #fbf9f5;
+      --bg-muted: #ebe6dc;
+      --bg-forest: #102419;
+      --bg-forest-card: #163022;
+
+      --ink-main: #141a16;
+      --ink-secondary: #434d46;
+      --ink-muted: #6e7870;
+      --ink-on-dark: #f2efe9;
+      --ink-on-dark-muted: #a3b1a8;
+
+      --palm-green: #0d6e47;
+      --palm-green-hover: #095436;
+      --palm-green-soft: #dff0e6;
+
+      --harvest-amber: #c86d14;
+      --harvest-amber-soft: #faecd8;
+      --plate-yellow: #f4c430;
+
+      --danger-red: #b42318;
+      --danger-soft: #fee4e2;
+
+      --border-grid: #d5cfc3;
+      --border-strong: #141a16;
+      --border-dark-grid: #254433;
+
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-paper);
+      color: var(--ink-main);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-paper);
+      line-height: 1.55;
+      overflow-x: hidden;
     }
-    h1, h2, h3, h4, .font-heading {
-      font-family: 'Outfit', sans-serif;
+
+    a {
+      color: inherit;
+      text-decoration: none;
     }
-    .gradient-text {
-      background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #f59e0b 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+
+    .mono {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
     }
-    .hero-glow {
-      background: radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.15) 0%, rgba(5, 46, 22, 0) 70%);
+
+    .serif-italic {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 400;
     }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+
+    /* CONTENEDOR DE RETÍCULA SUIZA (SWISS ARCHITECTURAL GRID) */
+    .grid-shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      border-left: 1px solid var(--border-grid);
+      border-right: 1px solid var(--border-grid);
+      background-color: var(--bg-paper);
     }
-    .badge-shimmer {
-      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
-      background-size: 200% 100%;
-      animation: shimmer 3s infinite;
+
+    /* CINTA TÉCNICA SUPERIOR */
+    .top-ledger-bar {
+      background-color: var(--bg-forest);
+      color: var(--ink-on-dark);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      padding: 0.55rem 1.5rem;
+      border-bottom: 1px solid var(--border-dark-grid);
     }
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
+
+    .top-ledger-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .ledger-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-led {
+      width: 7px;
+      height: 7px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* NAVEGACIÓN PRINCIPAL */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background-color: rgba(244, 241, 234, 0.94);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    .header-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: stretch;
+      border-left: 1px solid var(--border-grid);
+      border-right: 1px solid var(--border-grid);
+    }
+
+    .brand-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.9rem 1.5rem;
+      border-right: 1px solid var(--border-grid);
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border-strong);
+      background-color: var(--bg-surface);
+      padding: 3px;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
+    .brand-sub {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--ink-muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1.75rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--ink-secondary);
+      overflow-x: auto;
+    }
+
+    .nav-links a {
+      white-space: nowrap;
+      padding: 0.35rem 0;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--ink-main);
+      border-bottom-color: var(--palm-green);
+    }
+
+    .nav-index {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--palm-green);
+      margin-right: 0.3rem;
+      font-weight: 700;
+    }
+
+    .header-cta-cell {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1.25rem;
+      border-left: 1px solid var(--border-grid);
+      background-color: var(--bg-surface);
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      background-color: var(--palm-green);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.75rem 1.25rem;
+      border: 1px solid var(--border-strong);
+      box-shadow: 3px 3px 0px var(--border-strong);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--palm-green-hover);
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px var(--border-strong);
+    }
+
+    .btn-primary:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px var(--border-strong);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background-color: var(--bg-surface);
+      color: var(--ink-main);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.75rem 1.25rem;
+      border: 1px solid var(--border-strong);
+      transition: background-color 0.15s ease;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-muted);
+    }
+
+    /* SECCIÓN HERO: EDITORIAL + TIQUETE DE BÁSCULA EN VIVO */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    .hero-main {
+      padding: 3.5rem 3rem;
+      border-right: 1px solid var(--border-grid);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .kicker-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .kicker-badge {
+      background-color: var(--palm-green-soft);
+      color: var(--palm-green);
+      border: 1px solid var(--palm-green);
+      padding: 0.25rem 0.6rem;
+      font-weight: 700;
+    }
+
+    .kicker-location {
+      color: var(--ink-secondary);
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--border-grid);
+      background-color: var(--bg-surface);
+    }
+
+    .hero-title {
+      font-size: clamp(2.25rem, 4.3vw, 3.85rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.04;
+      color: var(--ink-main);
+      margin-bottom: 1.35rem;
+    }
+
+    .hero-title .serif-accent {
+      font-family: var(--font-serif);
+      font-weight: 400;
+      font-style: italic;
+      color: var(--palm-green);
+      font-size: 1.08em;
+    }
+
+    .hero-lead {
+      font-size: 1.08rem;
+      color: var(--ink-secondary);
+      max-width: 60ch;
+      margin-bottom: 2.25rem;
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    /* MATRIZ TÉCNICA INFERIOR DEL HERO (SIN PORCENTAJES INVENTADOS) */
+    .hero-spec-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--border-grid);
+      padding-top: 1.5rem;
+      gap: 1.25rem;
+    }
+
+    .spec-item {
+      border-left: 2px solid var(--palm-green);
+      padding-left: 0.75rem;
+    }
+
+    .spec-value {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--ink-main);
+      display: block;
+    }
+
+    .spec-label {
+      font-size: 0.76rem;
+      color: var(--ink-muted);
+      line-height: 1.3;
+      margin-top: 0.2rem;
+      display: block;
+    }
+
+    /* COLUMNA DERECHA HERO: TIQUETE DE BÁSCULA Y ACCESO EVALUADORES */
+    .hero-aside {
+      background-color: var(--bg-surface);
+      padding: 2.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .weigh-ticket {
+      background-color: #ffffff;
+      border: 1px solid var(--border-strong);
+      box-shadow: 4px 4px 0px rgba(20, 26, 22, 0.08);
+    }
+
+    .ticket-header {
+      background-color: var(--ink-main);
+      color: #ffffff;
+      padding: 0.75rem 1.15rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    .ticket-body {
+      padding: 1.25rem;
+    }
+
+    .ticket-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 0;
+      border-bottom: 1px dashed var(--border-grid);
+      font-size: 0.83rem;
+    }
+
+    .ticket-row:last-child {
+      border-bottom: none;
+    }
+
+    .ticket-key {
+      color: var(--ink-muted);
+      font-size: 0.78rem;
+    }
+
+    .ticket-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--ink-main);
+    }
+
+    /* Placa Colombiana de Transporte Pesado */
+    .col-plate {
+      display: inline-flex;
+      align-items: center;
+      background-color: var(--plate-yellow);
+      color: #111111;
+      border: 1.5px solid #111111;
+      border-radius: 3px;
+      padding: 0.1rem 0.5rem;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+    }
+
+    .status-pill-paid {
+      background-color: var(--palm-green-soft);
+      color: var(--palm-green);
+      border: 1px solid var(--palm-green);
+      padding: 0.15rem 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* Tarjeta de Credenciales para Jurados */
+    .jury-access-box {
+      border: 1px solid var(--border-strong);
+      background-color: var(--bg-paper);
+      padding: 1.25rem;
+    }
+
+    .jury-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-grid);
+    }
+
+    .jury-box-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .cred-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-grid);
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+    }
+
+    .copy-btn {
+      background-color: var(--bg-muted);
+      border: 1px solid var(--border-grid);
+      color: var(--ink-main);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .copy-btn:hover {
+      background-color: var(--palm-green-soft);
+      border-color: var(--palm-green);
+      color: var(--palm-green);
+    }
+
+    /* ENCABEZADOS DE SECCIÓN ESTILO DOSSIER */
+    .section-banner {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      border-bottom: 1px solid var(--border-grid);
+      background-color: var(--bg-surface);
+    }
+
+    .section-num {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 1rem 1.5rem;
+      border-right: 1px solid var(--border-grid);
+      color: var(--palm-green);
+      background-color: var(--palm-green-soft);
+    }
+
+    .section-heading-wrap {
+      padding: 1rem 1.75rem;
+    }
+
+    .section-heading {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    .section-meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      padding: 1rem 1.5rem;
+      border-left: 1px solid var(--border-grid);
+    }
+
+    /* SECCIÓN 01: FICHA CIENTÍFICA / PÓSTER ACADÉMICO UPC */
+    .poster-meta-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border-grid);
+      background-color: var(--bg-paper);
+    }
+
+    .poster-meta-cell {
+      padding: 1.15rem 1.5rem;
+      border-right: 1px solid var(--border-grid);
+    }
+
+    .poster-meta-cell:last-child {
+      border-right: none;
+    }
+
+    .meta-k {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .meta-v {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--ink-main);
+    }
+
+    .poster-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    .poster-col {
+      padding: 2.25rem 2rem;
+      border-right: 1px solid var(--border-grid);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .poster-col:last-child {
+      border-right: none;
+    }
+
+    .poster-col-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--palm-green);
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .poster-col h3 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .poster-col p {
+      font-size: 0.92rem;
+      color: var(--ink-secondary);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .poster-list {
+      list-style: none;
+      margin-top: 0.5rem;
+    }
+
+    .poster-list li {
+      position: relative;
+      padding-left: 1.25rem;
+      font-size: 0.88rem;
+      color: var(--ink-secondary);
+      margin-bottom: 0.6rem;
+    }
+
+    .poster-list li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      font-family: var(--font-mono);
+      color: var(--palm-green);
+      font-weight: 700;
+    }
+
+    .poster-footnote {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-grid);
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--ink-muted);
+    }
+
+    /* SECCIÓN 02: FLUJO OPERATIVO REAL Y CONTRASTE */
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border-grid);
+    }
+
+    .workflow-step {
+      padding: 2rem 1.75rem;
+      border-right: 1px solid var(--border-grid);
+      background-color: var(--bg-surface);
+    }
+
+    .workflow-step:last-child {
+      border-right: none;
+    }
+
+    .step-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      background-color: var(--ink-main);
+      color: #ffffff;
+      margin-bottom: 1rem;
+    }
+
+    .workflow-step h4 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-bottom: 0.65rem;
+      letter-spacing: -0.01em;
+    }
+
+    .workflow-step p {
+      font-size: 0.86rem;
+      color: var(--ink-secondary);
+      line-height: 1.55;
+    }
+
+    .workflow-code-ref {
+      margin-top: 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--palm-green);
+      background-color: var(--palm-green-soft);
+      padding: 0.35rem 0.6rem;
+      display: inline-block;
+    }
+
+    /* TABLA COMPARATIVA: PAPEL VS NOVAPALMA */
+    .comparison-wrap {
+      padding: 2.5rem 3rem;
+      border-bottom: 1px solid var(--border-strong);
+      background-color: var(--bg-paper);
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border-strong);
+      background-color: var(--bg-surface);
+      font-size: 0.88rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border-grid);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .comparison-table th {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background-color: var(--bg-muted);
+    }
+
+    .comparison-table th.col-nova {
+      background-color: var(--palm-green);
+      color: #ffffff;
+    }
+
+    .td-dimension {
+      font-weight: 700;
+      width: 22%;
+      color: var(--ink-main);
+    }
+
+    .td-manual {
+      width: 39%;
+      color: var(--ink-secondary);
+    }
+
+    .td-nova {
+      width: 39%;
+      color: var(--ink-main);
+      background-color: #f4faf6;
+      font-weight: 500;
+    }
+
+    /* SECCIÓN 03: CALCULADORA REAL DE LIQUIDACIÓN DE VIAJE */
+    .calculator-section {
+      display: grid;
+      grid-template-columns: 6fr 6fr;
+      border-bottom: 1px solid var(--border-strong);
+      background-color: var(--bg-forest);
+      color: var(--ink-on-dark);
+    }
+
+    .calc-controls {
+      padding: 3rem;
+      border-right: 1px solid var(--border-dark-grid);
+    }
+
+    .calc-kicker {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: #6ee7b7;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .calc-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.75rem;
+    }
+
+    .calc-desc {
+      font-size: 0.9rem;
+      color: var(--ink-on-dark-muted);
+      margin-bottom: 2rem;
+    }
+
+    .control-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .control-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .control-readout {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: #6ee7b7;
+      font-size: 0.95rem;
+    }
+
+    .calc-select,
+    .calc-input {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      background-color: var(--bg-forest-card);
+      border: 1px solid var(--border-dark-grid);
+      color: #ffffff;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+    }
+
+    .calc-range {
+      width: 100%;
+      accent-color: #10b981;
+      cursor: pointer;
+      height: 6px;
+    }
+
+    .tariff-presets {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .preset-btn {
+      flex: 1;
+      padding: 0.45rem 0.6rem;
+      background-color: var(--bg-forest-card);
+      border: 1px solid var(--border-dark-grid);
+      color: var(--ink-on-dark-muted);
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preset-btn.active,
+    .preset-btn:hover {
+      border-color: #34d399;
+      color: #ffffff;
+      background-color: rgba(16, 185, 129, 0.18);
+    }
+
+    /* Salida Derecha del Simulador: Liquidación y Transacción ACID */
+    .calc-output {
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background-color: #0c1c13;
+    }
+
+    .settlement-card {
+      border: 1px solid var(--border-dark-grid);
+      background-color: var(--bg-forest-card);
+      padding: 1.75rem;
+    }
+
+    .settlement-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-dark-grid);
+      padding-bottom: 0.85rem;
+      margin-bottom: 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--ink-on-dark-muted);
+    }
+
+    .settlement-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .settlement-metric {
+      padding: 0.9rem;
+      background-color: #0f2318;
+      border: 1px solid var(--border-dark-grid);
+    }
+
+    .sm-label {
+      font-size: 0.74rem;
+      color: var(--ink-on-dark-muted);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .sm-val {
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .settlement-net {
+      padding: 1.1rem;
+      background-color: rgba(16, 185, 129, 0.12);
+      border: 1px solid #10b981;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .net-val {
+      font-family: var(--font-mono);
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #6ee7b7;
+    }
+
+    .acid-log-preview {
+      margin-top: 1.25rem;
+      background-color: #08130d;
+      border: 1px solid var(--border-dark-grid);
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #a7f3d0;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+
+    /* SECCIÓN 04: ARQUITECTURA DE SOFTWARE Y APORTE AMBIENTAL */
+    .arch-env-grid {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    .arch-col {
+      padding: 2.75rem 2.5rem;
+      border-right: 1px solid var(--border-grid);
+    }
+
+    .stack-matrix {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .stack-card {
+      border: 1px solid var(--border-grid);
+      background-color: var(--bg-surface);
+      padding: 1.25rem;
+    }
+
+    .stack-layer {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--palm-green);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    .stack-card h4 {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 0.45rem;
+    }
+
+    .stack-card p {
+      font-size: 0.83rem;
+      color: var(--ink-secondary);
+      line-height: 1.5;
+    }
+
+    .env-col {
+      padding: 2.75rem 2.5rem;
+      background-color: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .env-card {
+      border-left: 3px solid var(--palm-green);
+      padding-left: 1rem;
+      margin-bottom: 1.35rem;
+    }
+
+    .env-card h4 {
+      font-size: 0.98rem;
+      font-weight: 800;
+      margin-bottom: 0.3rem;
+    }
+
+    .env-card p {
+      font-size: 0.85rem;
+      color: var(--ink-secondary);
+    }
+
+    /* SECCIÓN 05: EQUIPO DE INGENIERÍA */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    .team-cell {
+      padding: 2rem 1.75rem;
+      border-right: 1px solid var(--border-grid);
+      background-color: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .team-cell:last-child {
+      border-right: none;
+    }
+
+    .member-code {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--ink-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .member-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+
+    .member-role {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--palm-green);
+      margin-bottom: 0.75rem;
+    }
+
+    .member-desc {
+      font-size: 0.82rem;
+      color: var(--ink-secondary);
+      margin-bottom: 1.25rem;
+    }
+
+    .member-gh {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--ink-main);
+      border-top: 1px solid var(--border-grid);
+      padding-top: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .member-gh:hover {
+      color: var(--palm-green);
+    }
+
+    /* PIE DE PÁGINA INSTITUCIONAL */
+    .site-footer {
+      background-color: var(--ink-main);
+      color: var(--ink-on-dark);
+      padding: 2.5rem 3rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.82rem;
+    }
+
+    .footer-meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--ink-on-dark-muted);
+    }
+
+    /* RESPONSIVE DESIGN (MOBILE & TABLET) */
+    @media (max-width: 1024px) {
+      .hero-grid,
+      .calculator-section,
+      .arch-env-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-main,
+      .calc-controls,
+      .arch-col {
+        border-right: none;
+        border-bottom: 1px solid var(--border-grid);
+      }
+
+      .poster-columns {
+        grid-template-columns: 1fr;
+      }
+
+      .poster-col {
+        border-right: none;
+        border-bottom: 1px solid var(--border-grid);
+      }
+
+      .workflow-grid,
+      .team-grid,
+      .poster-meta-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .workflow-step,
+      .team-cell,
+      .poster-meta-cell {
+        border-bottom: 1px solid var(--border-grid);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .header-inner {
+        grid-template-columns: 1fr auto;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero-main {
+        padding: 2rem 1.25rem;
+      }
+
+      .hero-aside,
+      .calc-controls,
+      .calc-output,
+      .arch-col,
+      .env-col,
+      .comparison-wrap {
+        padding: 1.75rem 1.25rem;
+      }
+
+      .hero-spec-strip,
+      .workflow-grid,
+      .team-grid,
+      .poster-meta-bar,
+      .stack-matrix,
+      .settlement-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-banner {
+        grid-template-columns: auto 1fr;
+      }
+
+      .section-meta {
+        display: none;
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 0.75rem;
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-slate-950 min-h-screen">
+<body>
 
-  <!-- TOP BAR INSTITUCIONAL -->
-  <header class="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-emerald-900/40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      
-      <!-- Logo + Nombre -->
-      <a href="#inicio" class="flex items-center gap-3 group">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-700 p-0.5 shadow-lg shadow-emerald-900/50">
-          <img src="assets/logo.png" alt="Novapalma Logo" class="w-full h-full object-contain rounded-[10px] bg-slate-900">
-        </div>
+  <!-- CINTA TÉCNICA SUPERIOR -->
+  <div class="top-ledger-bar">
+    <div class="top-ledger-inner">
+      <div class="ledger-tag">
+        <span class="status-led"></span>
+        <span>UNIVERSIDAD POPULAR DEL CESAR · SECCIONAL AGUACHICA · INGENIERÍA DE SISTEMAS</span>
+      </div>
+      <div>
+        <span>XV FERIA DE EMPRENDIMIENTO UPC EMPRENDE · CASO DE ESTUDIO: PELAYA, CESAR</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CABECERA Y NAVEGACIÓN -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#inicio" class="brand-cell">
+        <img src="assets/logo.png" alt="Logo Novapalma" class="brand-logo">
         <div>
-          <span class="text-xl font-bold tracking-tight font-heading text-white group-hover:text-emerald-400 transition-colors">
-            Novapalma <span class="text-emerald-400">🌴</span>
-          </span>
-          <span class="hidden sm:inline-block text-[11px] font-semibold text-emerald-300/80 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800/40 ml-2">
-            UPC Aguachica
-          </span>
+          <span class="brand-title">Novapalma</span>
+          <span class="brand-sub">LOGÍSTICA &amp; BÁSCULA RFF</span>
         </div>
       </a>
 
-      <!-- Navegación Escritorio -->
-      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
-        <a href="#poster" class="hover:text-emerald-400 transition-colors">Póster Académico</a>
-        <a href="#demo" class="hover:text-emerald-400 transition-colors flex items-center gap-1 text-emerald-400 font-semibold">
-          <i data-lucide="play-circle" class="w-4 h-4"></i> Probar App
-        </a>
-        <a href="#problema-solucion" class="hover:text-emerald-400 transition-colors">Problema & Solución</a>
-        <a href="#sostenibilidad" class="hover:text-emerald-400 transition-colors flex items-center gap-1">
-          <i data-lucide="leaf" class="w-3.5 h-3.5 text-emerald-400"></i> Sostenibilidad
-        </a>
-        <a href="#ingenieria" class="hover:text-emerald-400 transition-colors">Ingeniería & Stack</a>
-        <a href="#simulador" class="hover:text-emerald-400 transition-colors">Simulador</a>
-        <a href="#equipo" class="hover:text-emerald-400 transition-colors">Equipo</a>
+      <nav class="nav-links" aria-label="Navegación principal">
+        <a href="#ficha-poster"><span class="nav-index">01.</span>Ficha del Póster</a>
+        <a href="#flujo-operativo"><span class="nav-index">02.</span>Operación</a>
+        <a href="#simulador"><span class="nav-index">03.</span>Liquidación en Vivo</a>
+        <a href="#arquitectura"><span class="nav-index">04.</span>Arquitectura PERN</a>
+        <a href="#equipo"><span class="nav-index">05.</span>Equipo</a>
       </nav>
 
-      <!-- Botón Acceso Directo a la App -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <a href="#simulador" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700/80 transition-all">
-          <i data-lucide="calculator" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span>Simulador</span>
-        </a>
-        <a href="#demo" class="app-link inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-900/50 transition-all hover:scale-105 border border-emerald-400/30">
-          <i data-lucide="external-link" class="w-4 h-4"></i>
-          <span>Entrar a Novapalma</span>
+      <div class="header-cta-cell">
+        <a href="https://novapalma-bay.vercel.app/login" target="_blank" rel="noopener noreferrer" class="btn-primary app-link">
+          <span>Abrir Sistema</span>
+          <span class="mono">↗</span>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- HERO SECTION -->
-  <section id="inicio" class="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden hero-glow">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <!-- Badges de la Feria -->
-      <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-6 text-center">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/90 text-emerald-300 border border-emerald-800/60 shadow-inner">
-          <i data-lucide="award" class="w-3.5 h-3.5 text-emerald-400"></i>
-          XV Feria de Emprendimiento UPC Emprende
-        </span>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/80 text-amber-300 border border-amber-800/60">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-          Soluciones Basadas en la Naturaleza
-        </span>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-950/80 text-sky-300 border border-sky-800/60">
-          <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-sky-400"></i>
-          Ingeniería de Sistemas
-        </span>
-      </div>
+  <!-- CONTENEDOR PRINCIPAL EN RETÍCULA SUIZA -->
+  <main class="grid-shell" id="inicio">
 
-      <!-- Titular Principal -->
-      <div class="text-center max-w-4xl mx-auto">
-        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight">
-          La Digitalización del <br class="hidden sm:inline">
-          <span class="gradient-text">Transporte de Palma de Aceite</span>
-        </h1>
-        <p class="text-base sm:text-xl text-slate-300 mb-8 max-w-2xl mx-auto font-normal leading-relaxed">
-          Plataforma web integral de control logístico, pesaje automatizado en báscula, trazabilidad forense y liquidación de fletes para el sector palmicultor de Pelaya y el Cesar.
-        </p>
+    <!-- HERO SECTION -->
+    <section class="hero-grid">
+      <!-- Columna Editorial Izquierda -->
+      <div class="hero-main">
+        <div>
+          <div class="kicker-row">
+            <span class="kicker-badge">PROYECTO DE AULA · 6.º SEMESTRE</span>
+            <span class="kicker-location">PELAYA &amp; AGUACHICA, CESAR</span>
+          </div>
 
-        <!-- CTA Buttons -->
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12">
-          <a href="#demo" class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold shadow-xl shadow-emerald-900/60 transition-all hover:scale-105 border border-emerald-400/40 text-base">
-            <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i>
-            <span>Probar Plataforma Novapalma</span>
-            <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
-          </a>
-          <a href="#poster" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-bold border border-slate-700/80 transition-all">
-            <i data-lucide="file-text" class="w-5 h-5 text-emerald-400"></i>
-            <span>Póster Académico UPC</span>
-          </a>
+          <h1 class="hero-title">
+            Control logístico, pesaje en báscula y <span class="serif-accent">liquidación contable</span> para el transporte de fruto de palma.
+          </h1>
+
+          <p class="hero-lead">
+            <strong>Novapalma</strong> reemplaza los talonarios en papel y las hojas de cálculo aisladas en contratistas de transporte agroindustrial. Centraliza el registro de tiquetes de báscula, el estado de la flota de camiones, el control de conductores y el libro mayor de ingresos y gastos operativos.
+          </p>
+
+          <div class="hero-actions">
+            <a href="https://novapalma-bay.vercel.app/login" id="btn-entrar-app" target="_blank" rel="noopener noreferrer" class="btn-primary app-link">
+              <span>Entrar a la Aplicación Desplegada</span>
+              <span class="mono">→</span>
+            </a>
+            <a href="#simulador" class="btn-secondary">
+              <span>Probar Calculadora de Fletes</span>
+            </a>
+          </div>
         </div>
 
-        <!-- Métricas Clave de Impacto -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
-          <div class="p-4 rounded-2xl glass-card text-center border border-emerald-900/30">
-            <div class="text-2xl sm:text-3xl font-black text-emerald-400 mb-1">100%</div>
-            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Trazabilidad ACID</div>
+        <!-- Especificaciones Reales del Sistema (Cero Porcentajes Inventados) -->
+        <div class="hero-spec-strip">
+          <div class="spec-item">
+            <span class="spec-value">5 Módulos</span>
+            <span class="spec-label">Dashboard, Viajes, Flota, Conductores y Finanzas</span>
           </div>
-          <div class="p-4 rounded-2xl glass-card text-center border border-emerald-900/30">
-            <div class="text-2xl sm:text-3xl font-black text-amber-400 mb-1">0%</div>
-            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Fugas en Fletes</div>
+          <div class="spec-item">
+            <span class="spec-value">ACID / SQL</span>
+            <span class="spec-label">Liquidación atómica de viajes en PostgreSQL</span>
           </div>
-          <div class="p-4 rounded-2xl glass-card text-center border border-emerald-900/30">
-            <div class="text-2xl sm:text-3xl font-black text-sky-400 mb-1">-18%</div>
-            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Consumo Diésel ACPM</div>
+          <div class="spec-item">
+            <span class="spec-value">RBAC + Zod</span>
+            <span class="spec-label">Roles Admin/Operador y validación estricta de datos</span>
           </div>
-          <div class="p-4 rounded-2xl glass-card text-center border border-emerald-900/30">
-            <div class="text-2xl sm:text-3xl font-black text-teal-400 mb-1">-70%</div>
-            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Tiempo Administrativo</div>
+          <div class="spec-item">
+            <span class="spec-value">Exportación .XLSX</span>
+            <span class="spec-label">Reportes contables e impresión nativa de estados</span>
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- SECCIÓN PÓSTER ACADÉMICO (ESPECIAL EVALUADORES / JURADOS) -->
-  <section id="poster" class="py-16 bg-slate-900/60 border-y border-slate-800 relative">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <!-- Encabezado de la Ficha Académica -->
-      <div class="text-center mb-12">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">
-          <i data-lucide="book-open" class="w-4 h-4"></i> FICHA CIENTÍFICA DEL PÓSTER
+      <!-- Columna Derecha: Tiquete de Báscula Realista + Credenciales para Evaluadores -->
+      <aside class="hero-aside">
+        <!-- Mockup de Tiquete de Báscula -->
+        <div class="weigh-ticket">
+          <div class="ticket-header">
+            <span>REMISIÓN DE BÁSCULA · #TK-8942</span>
+            <span class="status-pill-paid">LIQUIDADO</span>
+          </div>
+          <div class="ticket-body">
+            <div class="ticket-row">
+              <span class="ticket-key">Vehículo Asignado</span>
+              <span class="col-plate">WXQ-284</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-key">Ruta Operativa</span>
+              <span class="ticket-val">Finca La Esperanza → Extractora</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-key">Peso Neto Fruto (RFF)</span>
+              <span class="ticket-val">32.40 Ton</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-key">Tarifa Pactada / Ton</span>
+              <span class="ticket-val">$45.000 COP</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-key">Valor Liquidado del Viaje</span>
+              <span class="ticket-val" style="color: var(--palm-green); font-size: 0.95rem;">$1.458.000 COP</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-key">Asiento Libro Mayor</span>
+              <span class="ticket-val">INCOME · Transacción #TX-409</span>
+            </div>
+          </div>
         </div>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Desarrollo de Aplicación Web para la Gestión de Viajes</h2>
-        <p class="text-slate-400 mt-2 text-sm sm:text-base">Caso de Estudio: Contratista de Transporte Palmicultor en Pelaya, Cesar</p>
+
+        <!-- Credenciales de Prueba para Jurados -->
+        <div class="jury-access-box">
+          <div class="jury-box-header">
+            <span class="jury-box-title">Acceso para Jurados y Evaluadores</span>
+            <span class="mono" style="font-size: 0.7rem; color: var(--palm-green);">novapalma-bay.vercel.app</span>
+          </div>
+          <p style="font-size: 0.78rem; color: var(--ink-secondary); margin-bottom: 0.75rem;">
+            Utiliza cualquiera de las cuentas de demostración para inspeccionar el sistema en vivo:
+          </p>
+
+          <div class="cred-row">
+            <div>
+              <strong style="display: block; font-size: 0.7rem; color: var(--ink-muted);">ROL ADMINISTRADOR</strong>
+              <span>admin@novapalma.com</span> · <span style="color: var(--palm-green);">admin123</span>
+            </div>
+            <button type="button" class="copy-btn" onclick="copyCred('admin@novapalma.com', this)">Copiar correo</button>
+          </div>
+
+          <div class="cred-row" style="margin-bottom: 0;">
+            <div>
+              <strong style="display: block; font-size: 0.7rem; color: var(--ink-muted);">ROL OPERADOR LOGÍSTICO</strong>
+              <span>operador@novapalma.com</span> · <span style="color: var(--palm-green);">operador123</span>
+            </div>
+            <button type="button" class="copy-btn" onclick="copyCred('operador@novapalma.com', this)">Copiar correo</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- SECCIÓN 01: FICHA TÉCNICA DEL PÓSTER ACADÉMICO -->
+    <section id="ficha-poster">
+      <div class="section-banner">
+        <span class="section-num">SECCIÓN 01</span>
+        <div class="section-heading-wrap">
+          <h2 class="section-heading">Ficha Académica del Proyecto de Ingeniería</h2>
+        </div>
+        <span class="section-meta">DOC_REF // UPC-AGUACHICA-2026</span>
       </div>
 
-      <!-- Tarjeta Principal del Póster -->
-      <div class="bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl p-6 sm:p-10 border border-emerald-800/40 shadow-2xl space-y-8">
-        
-        <!-- Metadatos de la Investigación -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-sm">
+      <!-- Barra de Metadatos -->
+      <div class="poster-meta-bar">
+        <div class="poster-meta-cell">
+          <span class="meta-k">Título del Proyecto</span>
+          <span class="meta-v">Aplicación Web para Gestión de Transporte Palmicultor</span>
+        </div>
+        <div class="poster-meta-cell">
+          <span class="meta-k">Contexto Operativo</span>
+          <span class="meta-v">Contratista de Carga · Pelaya, Sur del Cesar</span>
+        </div>
+        <div class="poster-meta-cell">
+          <span class="meta-k">Institución Académica</span>
+          <span class="meta-v">Universidad Popular del Cesar · Seccional Aguachica</span>
+        </div>
+        <div class="poster-meta-cell">
+          <span class="meta-k">Programa y Semestre</span>
+          <span class="meta-v">Ingeniería de Sistemas · 6.º Semestre</span>
+        </div>
+      </div>
+
+      <!-- 3 Columnas del Póster -->
+      <div class="poster-columns">
+        <article class="poster-col">
           <div>
-            <span class="text-slate-400 block text-xs">Institución & Programa:</span>
-            <strong class="text-white">Universidad Popular del Cesar</strong>
-            <span class="text-emerald-400 block text-xs">Ingeniería de Sistemas · 6to Semestre</span>
+            <span class="poster-col-tag">01.1 // Diagnóstico de Campo</span>
+            <h3>Planteamiento del Problema</h3>
+            <p>
+              En las zonas productoras de palma de aceite del municipio de Pelaya (Cesar), las empresas contratistas de transporte suelen registrar sus despachos de fruta mediante talonarios de papel, recibos físicos de báscula y cuadernos de control diario.
+            </p>
+            <p>
+              Esta dependencia del registro manual ocasiona extravío de tiquetes de pesaje, demoras al cruzar cuánto pesó cada camión en la planta extractora frente a lo cobrado por flete, y dificultad para consolidar los gastos de combustible (ACPM), peajes y mantenimientos de cada vehículo al cierre del mes.
+            </p>
           </div>
-          <div>
-            <span class="text-slate-400 block text-xs">Ubicación de Implementación:</span>
-            <strong class="text-white">Pelaya, Cesar, Colombia</strong>
-            <span class="text-slate-400 block text-xs">Desarrollado en Seccional Aguachica</span>
+          <div class="poster-footnote">
+            EVIDENCIA // Levantamiento de requerimientos con operación real en Pelaya, Cesar.
           </div>
+        </article>
+
+        <article class="poster-col">
           <div>
-            <span class="text-slate-400 block text-xs">Autores del Proyecto:</span>
-            <strong class="text-white text-xs">Jose Silva, Yesid Gelvez, Hecmaibel Quero, Javier Beleño</strong>
+            <span class="poster-col-tag">01.2 // Pertinencia Regional</span>
+            <h3>Justificación</h3>
+            <p>
+              El transporte de racimos de fruta fresca (RFF) entre las fincas palmeras y las plantas extractoras exige exactitud en el control de tonelaje y tarifas. Una diferencia no detectada en tiquetes o gastos operativos afecta directamente la liquidez del transportista.
+            </p>
+            <p>
+              Implementar una aplicación web diseñada a la medida del flujo de trabajo local permite formalizar la operación sin costos de licencias privativas, brindando acceso inmediato desde cualquier navegador tanto en oficina como en campo.
+            </p>
+          </div>
+          <div class="poster-footnote">
+            IMPACTO // Formalización contable y trazabilidad por viaje, vehículo y conductor.
+          </div>
+        </article>
+
+        <article class="poster-col">
+          <div>
+            <span class="poster-col-tag">01.3 // Alcance Técnico</span>
+            <h3>Objetivos del Sistema</h3>
+            <p>
+              <strong>Objetivo General:</strong> Desarrollar una plataforma web integral bajo arquitectura PERN para gestionar el ciclo operativo y financiero de viajes de carga de palma de aceite.
+            </p>
+            <ul class="poster-list">
+              <li>Registrar vehículos de carga pesada, capacidades en toneladas, kilometraje y estado mecánico.</li>
+              <li>Vincular conductores con su documentación, categoría de licencia y disponibilidad operativa.</li>
+              <li>Automatizar el cálculo de fletes según el peso en báscula y el precio pactado por tonelada.</li>
+              <li>Garantizar que la liquidación de cada viaje genere su asiento de ingreso mediante transacciones ACID.</li>
+            </ul>
+          </div>
+          <div class="poster-footnote">
+            VERIFICACIÓN // Validado mediante pruebas funcionales y suite E2E con Selenium.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 02: FLUJO OPERATIVO Y CONTRASTE -->
+    <section id="flujo-operativo">
+      <div class="section-banner">
+        <span class="section-num">SECCIÓN 02</span>
+        <div class="section-heading-wrap">
+          <h2 class="section-heading">Ciclo Operativo: De la Báscula al Libro Contable</h2>
+        </div>
+        <span class="section-meta">FLUJO DE DATOS EN 4 ETAPAS</span>
+      </div>
+
+      <!-- 4 Etapas Reales del Software -->
+      <div class="workflow-grid">
+        <div class="workflow-step">
+          <span class="step-badge">ETAPA 01</span>
+          <h4>Catálogo de Flota y Conductores</h4>
+          <p>
+            Se dan de alta los camiones (<span class="mono">plate</span>, <span class="mono">type</span>, <span class="mono">capacityTons</span>, <span class="mono">currentKm</span>) y los conductores (<span class="mono">cedula</span>, <span class="mono">licenseType</span>). El sistema valida que solo unidades con estado <strong>ACTIVO</strong> sean asignadas a nuevos despachos.
+          </p>
+          <span class="workflow-code-ref">Modelos: Vehicle · Driver</span>
+        </div>
+
+        <div class="workflow-step">
+          <span class="step-badge">ETAPA 02</span>
+          <h4>Despacho y Tiquete de Báscula</h4>
+          <p>
+            Al recibir el tiquete en la planta extractora, se registra el viaje con origen, destino, fecha, peso neto en toneladas (<span class="mono">weightTons</span>) y tarifa por tonelada (<span class="mono">pricePerTon</span>). El valor total del flete se calcula sin intervención manual.
+          </p>
+          <span class="workflow-code-ref">Cálculo: weightTons × pricePerTon</span>
+        </div>
+
+        <div class="workflow-step">
+          <span class="step-badge">ETAPA 03</span>
+          <h4>Liquidación Transaccional ACID</h4>
+          <p>
+            Cuando el administrador aprueba y liquida un viaje pendiente, el servidor ejecuta una transacción atómica en PostgreSQL: actualiza el estado del viaje a <strong>PAGADO</strong> e inserta el registro de ingreso en la tabla financiera.
+          </p>
+          <span class="workflow-code-ref">prisma.$transaction([Trip, Transaction])</span>
+        </div>
+
+        <div class="workflow-step">
+          <span class="step-badge">ETAPA 04</span>
+          <h4>Gastos Operativos y Balance</h4>
+          <p>
+            Se registran los egresos por categoría (Combustible ACPM, Mantenimiento, Peajes, Viáticos, Insumos). El panel ejecutivo consolida ingresos vs. gastos y permite exportar el libro contable en formato Excel (<span class="mono">.xlsx</span>).
+          </p>
+          <span class="workflow-code-ref">Módulos: Finance · Dashboard</span>
+        </div>
+      </div>
+
+      <!-- Tabla Comparativa Directa -->
+      <div class="comparison-wrap">
+        <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: -0.01em;">
+          Contraste Operativo: Control Tradicional vs. Novapalma
+        </h3>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Dimensión Operativa</th>
+              <th>Gestión Manual (Talonarios y Hojas Sueltas)</th>
+              <th class="col-nova">Plataforma Web Novapalma</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-dimension">Registro de Pesaje en Báscula</td>
+              <td class="td-manual">Recibos físicos en papel térmico que se borran con el calor o se extravían antes de llegar a la oficina.</td>
+              <td class="td-nova">Registro digital con número de tiquete único, fecha, camión asignado, conductor y tonelaje exacto.</td>
+            </tr>
+            <tr>
+              <td class="td-dimension">Liquidación de Fletes</td>
+              <td class="td-manual">Multiplicación manual viaje por viaje al final de la semana o quincena, propensa a errores de digitación.</td>
+              <td class="td-nova">Cálculo automático al registrar el peso y liquidación en 1 clic que crea el asiento contable de ingreso.</td>
+            </tr>
+            <tr>
+              <td class="td-dimension">Control de Gastos (ACPM y Mantenimiento)</td>
+              <td class="td-manual">Vales de tanqueo y facturas de taller guardadas en carpetas sin cruce directo contra los ingresos del mes.</td>
+              <td class="td-nova">Registro tipificado de egresos (Combustible, Mantenimiento, Peajes, Viáticos) vinculado al vehículo correspondiente.</td>
+            </tr>
+            <tr>
+              <td class="td-dimension">Consulta Histórica y Reportes</td>
+              <td class="td-manual">Búsqueda manual en cuadernos anteriores para saber cuántos viajes realizó un camión o conductor en un rango de fechas.</td>
+              <td class="td-nova">Filtros dinámicos por rango de fechas, vehículo y conductor con gráficos de evolución y descarga directa a Excel.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 03: SIMULADOR REAL DE LIQUIDACIÓN DE VIAJE -->
+    <section id="simulador">
+      <div class="section-banner">
+        <span class="section-num">SECCIÓN 03</span>
+        <div class="section-heading-wrap">
+          <h2 class="section-heading">Calculadora Interactiva de Liquidación de Despacho</h2>
+        </div>
+        <span class="section-meta">MOTOR DE CÁLCULO REAL DEL SISTEMA</span>
+      </div>
+
+      <div class="calculator-section">
+        <!-- Controles de Entrada -->
+        <div class="calc-controls">
+          <span class="calc-kicker">DEMOSTRACIÓN FUNCIONAL DE CÁLCULO</span>
+          <h3 class="calc-title">Simula el registro y liquidación de un viaje</h3>
+          <p class="calc-desc">
+            Prueba la lógica exacta que ejecuta Novapalma al liquidar un despacho de fruto de palma según el peso reportado en báscula, la tarifa pactada por tonelada y los gastos operativos asociados.
+          </p>
+
+          <!-- Ruta -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="sim-ruta">Ruta del Despacho (Pelaya / Sur del Cesar)</label>
+            </div>
+            <select id="sim-ruta" class="calc-select">
+              <option value="Finca La Esperanza (Pelaya) → Planta Extractora">Finca La Esperanza (Pelaya) → Planta Extractora</option>
+              <option value="Vereda San Bernardo → Báscula Central Aguachica">Vereda San Bernardo → Báscula Central Aguachica</option>
+              <option value="Plantación El Progreso → Extractora del Sur">Plantación El Progreso → Extractora del Sur</option>
+            </select>
+          </div>
+
+          <!-- Peso Neto en Báscula -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="sim-peso">Peso Neto en Báscula (Toneladas RFF)</label>
+              <span id="lbl-peso" class="control-readout">28.5 Ton</span>
+            </div>
+            <input type="range" id="sim-peso" class="calc-range" min="5" max="55" step="0.5" value="28.5">
+          </div>
+
+          <!-- Tarifa por Tonelada -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="sim-tarifa">Tarifa Pactada por Tonelada (COP)</label>
+              <span id="lbl-tarifa" class="control-readout">$45.000 / Ton</span>
+            </div>
+            <input type="range" id="sim-tarifa" class="calc-range" min="25000" max="85000" step="1000" value="45000">
+            <div class="tariff-presets">
+              <button type="button" class="preset-btn" data-val="38000">Ruta Corta ($38k)</button>
+              <button type="button" class="preset-btn active" data-val="45000">Estándar ($45k)</button>
+              <button type="button" class="preset-btn" data-val="58000">Ruta Larga ($58k)</button>
+            </div>
+          </div>
+
+          <!-- Gastos Operativos del Viaje -->
+          <div class="control-group" style="margin-bottom: 0;">
+            <div class="control-label-row">
+              <label for="sim-gastos">Gastos Registrados del Viaje (ACPM, Peajes, Viáticos)</label>
+              <span id="lbl-gastos" class="control-readout">$380.000 COP</span>
+            </div>
+            <input type="range" id="sim-gastos" class="calc-range" min="0" max="1200000" step="20000" value="380000">
           </div>
         </div>
 
-        <!-- 3 Columnas del Póster Científico -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          <!-- Col 1: Planteamiento del Problema -->
-          <div class="p-5 rounded-2xl bg-slate-950/50 border border-slate-800/80">
-            <div class="flex items-center gap-2 text-rose-400 font-bold mb-3 font-heading text-lg">
-              <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-              Planteamiento
+        <!-- Resultado Contable y Vista de Transacción ACID -->
+        <div class="calc-output">
+          <div class="settlement-card">
+            <div class="settlement-header">
+              <span>LIQUIDACIÓN PRELIMINAR DE FLETE</span>
+              <span id="sim-ticket-id">TIQUETE #TK-9014</span>
             </div>
-            <p class="text-slate-300 text-sm leading-relaxed text-justify mb-3">
-              La contratista de transporte en Pelaya gestionaba sus despachos de fruto de palma de manera 100% manual. El registro de pesaje en báscula, control de tickets, tipo de fruta y consumo de combustible se llevaba en papel o planillas aisladas.
-            </p>
-            <p class="text-slate-400 text-xs leading-relaxed">
-              <strong>Consecuencias:</strong> Errores en conciliación de pesos, extravío de tickets de entrega, demoras en el pago a conductores y nula visibilidad para la toma de decisiones gerenciales.
-            </p>
-          </div>
 
-          <!-- Col 2: Justificación y Enfoque -->
-          <div class="p-5 rounded-2xl bg-slate-950/50 border border-slate-800/80">
-            <div class="flex items-center gap-2 text-emerald-400 font-bold mb-3 font-heading text-lg">
-              <i data-lucide="check-circle" class="w-5 h-5"></i>
-              Justificación
+            <div class="settlement-grid">
+              <div class="settlement-metric">
+                <span class="sm-label">Ingreso Bruto del Viaje (Flete)</span>
+                <span id="res-ingreso" class="sm-val">$1.282.500</span>
+              </div>
+              <div class="settlement-metric">
+                <span class="sm-label">Egresos Operativos Registrados</span>
+                <span id="res-gasto" class="sm-val" style="color: #fca5a5;">-$380.000</span>
+              </div>
             </div>
-            <p class="text-slate-300 text-sm leading-relaxed text-justify mb-3">
-              El sector palmicultor es el motor agroindustrial del sur del Cesar. Dotar a los transportistas locales de software a medida digitaliza la cadena de custodia del fruto, previene pérdidas económicas y maximiza la rentabilidad del flete.
-            </p>
-            <p class="text-slate-400 text-xs leading-relaxed">
-              <strong>Viabilidad:</strong> Desarrollado sobre tecnologías web abiertas de alto rendimiento (Stack PERN), reduciendo a cero el costo por licencias y garantizando escalabilidad inmediata.
-            </p>
-          </div>
 
-          <!-- Col 3: Objetivos del Proyecto -->
-          <div class="p-5 rounded-2xl bg-slate-950/50 border border-slate-800/80">
-            <div class="flex items-center gap-2 text-sky-400 font-bold mb-3 font-heading text-lg">
-              <i data-lucide="target" class="w-5 h-5"></i>
-              Objetivos
+            <div class="settlement-net">
+              <div>
+                <span class="sm-label" style="color: #a7f3d0; font-weight: 600;">UTILIDAD NETA OPERATIVA DEL DESPACHO</span>
+                <span id="res-ruta-actual" class="mono" style="font-size: 0.72rem; color: var(--ink-on-dark-muted);">Finca La Esperanza (Pelaya) → Planta Extractora</span>
+              </div>
+              <span id="res-neto" class="net-val">$902.500</span>
             </div>
-            <div class="text-xs text-slate-300 space-y-2">
-              <p><strong>General:</strong> Desarrollar una plataforma web integral para el registro, control y liquidación automatizada de viajes de carga palmicultora en Novapalma.</p>
-              <ul class="list-disc list-inside text-slate-400 space-y-1">
-                <li>Levantar requerimientos reales con transportistas de la región.</li>
-                <li>Diseñar arquitectura 3NF con integridad referencial y auditoría delta.</li>
-                <li>Implementar módulos de báscula, flota, tarifas y analítica financiera.</li>
-              </ul>
+
+            <!-- Previsualización del Registro Transaccional en Base de Datos -->
+            <div class="acid-log-preview" id="res-sql-preview">
+              // Transacción ACID generada en PostgreSQL (Prisma v7):<br>
+              BEGIN;<br>
+              UPDATE "Trip" SET status = 'PAID', "tripCost" = 1282500 WHERE ticket = 'TK-9014';<br>
+              INSERT INTO "Transaction" (type, category, amount, description)<br>
+              VALUES ('INCOME', 'Viaje Liquidado', 1282500, 'Flete 28.5 Ton · TK-9014');<br>
+              COMMIT;
             </div>
           </div>
 
+          <div style="margin-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <span class="mono" style="font-size: 0.74rem; color: var(--ink-on-dark-muted);">
+              * Fórmula fiel al modelo de datos de Novapalma (Trip &amp; Transaction).
+            </span>
+            <a href="https://novapalma-bay.vercel.app/login" target="_blank" rel="noopener noreferrer" class="btn-primary app-link" style="background-color: #10b981; color: #062415; border-color: #062415;">
+              <span>Registrar Viaje en la App</span>
+              <span class="mono">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 04: ARQUITECTURA DE SOFTWARE Y SOSTENIBILIDAD -->
+    <section id="arquitectura">
+      <div class="section-banner">
+        <span class="section-num">SECCIÓN 04</span>
+        <div class="section-heading-wrap">
+          <h2 class="section-heading">Ingeniería de Software (Stack PERN) y Enfoque Ambiental</h2>
+        </div>
+        <span class="section-meta">ARQUITECTURA &amp; SOSTENIBILIDAD</span>
+      </div>
+
+      <div class="arch-env-grid">
+        <!-- Columna Izquierda: Stack PERN -->
+        <div class="arch-col">
+          <span class="poster-col-tag">04.1 // Arquitectura Técnica Real</span>
+          <h3 style="font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem;">
+            Diseño modular con integridad transaccional
+          </h3>
+          <p style="font-size: 0.9rem; color: var(--ink-secondary);">
+            El código fuente está estructurado separando el cliente SPA, la capa de controladores/servicios REST y el esquema relacional en PostgreSQL.
+          </p>
+
+          <div class="stack-matrix">
+            <div class="stack-card">
+              <span class="stack-layer">CAPA DE PRESENTACIÓN</span>
+              <h4>React 19 + Vite</h4>
+              <p>
+                Interfaz agroindustrial adaptativa con modo claro/oscuro, gráficos vectoriales SVG de ingresos vs. egresos, exportación nativa a Excel (<span class="mono">xlsx</span>) y hoja de estilos dedicada para impresión (<span class="mono">@media print</span>).
+              </p>
+            </div>
+
+            <div class="stack-card">
+              <span class="stack-layer">CAPA DE NEGOCIO Y API</span>
+              <h4>Node.js + Express + Zod</h4>
+              <p>
+                API RESTful protegida con autenticación JWT y encriptación <span class="mono">bcrypt</span>. Todos los payloads de entrada pasan por esquemas estrictos de <strong>Zod</strong> para impedir datos corruptos o asignaciones no autorizadas.
+              </p>
+            </div>
+
+            <div class="stack-card">
+              <span class="stack-layer">PERSISTENCIA RELACIONAL</span>
+              <h4>PostgreSQL + Prisma ORM v7</h4>
+              <p>
+                Conexión mediante <span class="mono">@prisma/adapter-pg</span>. Modelo normalizado en 3NF que relaciona Usuarios, Vehículos, Conductores, Viajes y Transacciones Financieras con integridad referencial.
+              </p>
+            </div>
+
+            <div class="stack-card">
+              <span class="stack-layer">ASEGURAMIENTO DE CALIDAD</span>
+              <h4>Pruebas E2E con Selenium</h4>
+              <p>
+                Suite automatizada (<span class="mono">test-selenium-security.js</span>) que verifica el control de acceso basado en roles (RBAC), bloqueo de sesiones no autenticadas y protección frente a envíos duplicados.
+              </p>
+            </div>
+          </div>
         </div>
 
-      </div>
-    </div>
-  </section>
-
-  <!-- SECCIÓN DEMO EN VIVO / ACCESO AL SISTEMA -->
-  <section id="demo" class="py-20 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-t border-emerald-900/40 relative">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-14">
-        <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 mb-3">
-          <i data-lucide="laptop" class="w-4 h-4 text-emerald-400"></i> DEMOSTRACIÓN EN TIEMPO REAL
-        </span>
-        <h2 class="text-3xl sm:text-5xl font-black text-white mb-4">
-          Experimenta <span class="gradient-text">Novapalma en Vivo</span>
-        </h2>
-        <p class="text-slate-300 text-base sm:text-lg">
-          Accede al entorno de la plataforma y explora los módulos de viajes, pesaje automatizado y control financiero.
-        </p>
-      </div>
-
-      <!-- Tarjeta Interactiva de Demo -->
-      <div class="rounded-3xl glass-card border border-emerald-800/40 p-6 sm:p-10 shadow-2xl relative overflow-hidden">
-        <div class="absolute -top-24 -right-24 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          
-          <!-- Columna Izquierda: Información de Acceso -->
-          <div class="lg:col-span-5 space-y-6">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 text-xs font-mono border border-emerald-800/40">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              Entorno Activo · Listo para Jurados
-            </div>
-            
-            <h3 class="text-2xl font-bold text-white leading-snug">
-              Ingresa al Software Novapalma
+        <!-- Columna Derecha: Sostenibilidad Honesta -->
+        <div class="env-col">
+          <div>
+            <span class="poster-col-tag">04.2 // Línea de la Feria UPC Emprende</span>
+            <h3 style="font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.75rem;">
+              Gestión digital y reducción del uso de papel en campo
             </h3>
-            
-            <p class="text-slate-300 text-sm leading-relaxed">
-              Explora las funciones de <strong>Control de Despacho</strong>, <strong>Pesaje de Fruta</strong>, <strong>Auditoría Forense</strong> y <strong>Reportes de ACPM</strong>.
+            <p style="font-size: 0.88rem; color: var(--ink-secondary); margin-bottom: 1.5rem;">
+              En coherencia con el eje de la feria, Novapalma aporta a la modernización responsable de la cadena logística palmicultora en tres frentes verificables:
             </p>
 
-            <!-- Credenciales sugeridas para el jurado -->
-            <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
-              <div class="text-slate-400 font-semibold uppercase tracking-wider text-[11px] flex items-center justify-between">
-                <span>Credenciales para Evaluadores</span>
-                <span class="text-emerald-400 font-mono">Stand UPC</span>
-              </div>
-              <div class="flex items-center justify-between font-mono bg-slate-900 px-3 py-2 rounded-lg text-slate-200">
-                <span>📧 <strong class="text-white">admin@novapalma.com</strong></span>
-                <span class="text-slate-400">admin123</span>
-              </div>
-              <div class="flex items-center justify-between font-mono bg-slate-900 px-3 py-2 rounded-lg text-slate-200">
-                <span>🚚 <strong class="text-white">operador@novapalma.com</strong></span>
-                <span class="text-slate-400">operador123</span>
-              </div>
+            <div class="env-card">
+              <h4>1. Desmaterialización de Talonarios y Planillas</h4>
+              <p>
+                Sustituye el uso continuo de talonarios de remisión en papel carbón y carpetas físicas de archivo por registros digitales consultables y exportables bajo demanda.
+              </p>
             </div>
 
-            <!-- Botón Grande de Entrada -->
-            <div class="pt-2">
-              <a href="https://novapalma-bay.vercel.app/login" id="btn-entrar-app" target="_blank" rel="noopener noreferrer" 
-                class="w-full inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-base shadow-xl shadow-emerald-900/60 transition-all hover:scale-[1.02] border border-emerald-400/40">
-                <i data-lucide="log-in" class="w-5 h-5"></i>
-                <span>Abrir Software Novapalma</span>
-                <i data-lucide="external-link" class="w-4 h-4 ml-auto text-emerald-200"></i>
-              </a>
-              <p class="text-center text-[11px] text-slate-400 mt-2">
-                Abre la aplicación en vivo (<span class="text-emerald-400 font-mono">novapalma-bay.vercel.app</span>)
+            <div class="env-card">
+              <h4>2. Seguimiento Preventivo de la Flota</h4>
+              <p>
+                El control del kilometraje (<span class="mono">currentKm</span>) y de los estados de mantenimiento (<span class="mono">MAINTENANCE</span>) junto con el historial de gastos de taller facilita mantener los camiones en condiciones óptimas de operación.
+              </p>
+            </div>
+
+            <div class="env-card" style="margin-bottom: 0;">
+              <h4>3. Control de Capacidad Útil por Vehículo</h4>
+              <p>
+                Cada camión tiene registrada su capacidad máxima en toneladas (<span class="mono">capacityTons</span>), promoviendo despachos ajustados a la ficha técnica de cada unidad de carga.
               </p>
             </div>
           </div>
 
-          <!-- Columna Derecha: Vista Previa Visual Mockup -->
-          <div class="lg:col-span-7">
-            <div class="rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden">
-              
-              <!-- Ventana Mockup Header -->
-              <div class="bg-slate-900 px-4 py-3 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
-                  <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
-                  <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-                  <span class="ml-2 font-mono text-[11px] text-slate-400">novapalma.app/dashboard</span>
-                </div>
-                <span class="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
-                  <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Sesión Segura
-                </span>
-              </div>
-
-              <!-- Contenido Simulado del Dashboard -->
-              <div class="p-5 space-y-4">
-                
-                <!-- Mini Stats Bar -->
-                <div class="grid grid-cols-3 gap-2">
-                  <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-                    <span class="text-[10px] text-slate-400 uppercase font-semibold block">Viajes Mes</span>
-                    <strong class="text-lg text-emerald-400 font-mono">142</strong>
-                  </div>
-                  <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-                    <span class="text-[10px] text-slate-400 uppercase font-semibold block">Fruta Pesada</span>
-                    <strong class="text-lg text-white font-mono">3,890 T</strong>
-                  </div>
-                  <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-                    <span class="text-[10px] text-slate-400 uppercase font-semibold block">Facturación</span>
-                    <strong class="text-lg text-amber-400 font-mono">$18.4M</strong>
-                  </div>
-                </div>
-
-                <!-- Mini Tabla de Despacho -->
-                <div class="rounded-xl border border-slate-800 overflow-hidden text-xs">
-                  <div class="bg-slate-900 px-3 py-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex justify-between">
-                    <span>Últimos Despachos en Báscula</span>
-                    <span class="text-emerald-400">En Tiempo Real</span>
-                  </div>
-                  <div class="divide-y divide-slate-800/80 bg-slate-950 font-mono text-[11px]">
-                    <div class="px-3 py-2 flex items-center justify-between text-slate-300">
-                      <span>#TK-8942 · WXQ-284</span>
-                      <span class="text-slate-400">Pelaya ➔ Extractora</span>
-                      <strong class="text-emerald-400">32.4 Ton</strong>
-                      <span class="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 text-[10px]">Liquidado</span>
-                    </div>
-                    <div class="px-3 py-2 flex items-center justify-between text-slate-300">
-                      <span>#TK-8941 · TRL-109</span>
-                      <span class="text-slate-400">Finca La Palma ➔ Aguachica</span>
-                      <strong class="text-emerald-400">28.1 Ton</strong>
-                      <span class="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 text-[10px]">Liquidado</span>
-                    </div>
-                    <div class="px-3 py-2 flex items-center justify-between text-slate-300">
-                      <span>#TK-8940 · SKZ-912</span>
-                      <span class="text-slate-400">Palmeras San José ➔ Báscula</span>
-                      <strong class="text-amber-400">30.8 Ton</strong>
-                      <span class="px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 text-[10px]">En Pesaje</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Footer del Mockup -->
-                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                  <span>🛡️ Auditoría Forense: Transacción ACID confirmada</span>
-                  <span class="text-emerald-400 font-semibold">PostgreSQL · Prisma 7</span>
-                </div>
-
-              </div>
-
-            </div>
+          <div class="poster-footnote">
+            NOTA METODOLÓGICA // Todos los indicadores presentados en la plataforma provienen directamente de los registros reales ingresados en la base de datos operativa.
           </div>
-
         </div>
+      </div>
+    </section>
 
+    <!-- SECCIÓN 05: EQUIPO DE DESARROLLO -->
+    <section id="equipo">
+      <div class="section-banner">
+        <span class="section-num">SECCIÓN 05</span>
+        <div class="section-heading-wrap">
+          <h2 class="section-heading">Equipo de Autores e Investigadores</h2>
+        </div>
+        <span class="section-meta">INGENIERÍA DE SISTEMAS · 6.º SEMESTRE</span>
       </div>
 
-    </div>
-  </section>
-
-  <!-- SECCIÓN PROBLEMA VS SOLUCIÓN (VISUAL) -->
-  <section id="problema-solucion" class="py-20 relative">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-          La Transformación Operativa
-        </h2>
-        <p class="text-slate-400 text-base sm:text-lg">
-          De cuadernos manchados de aceite a una plataforma digital en la nube con trazabilidad en milisegundos.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        <!-- Tarjeta: Antes -->
-        <div class="rounded-3xl p-6 sm:p-8 bg-rose-950/20 border border-rose-900/30">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 mb-6">
-            <i data-lucide="x-circle" class="w-4 h-4"></i> ANTES: GESTIÓN MANUAL
-          </div>
-          <ul class="space-y-4 text-slate-300 text-sm">
-            <li class="flex items-start gap-3">
-              <i data-lucide="circle-alert" class="w-5 h-5 text-rose-400 shrink-0 mt-0.5"></i>
-              <span><strong>Tickets perdidos o traspapelados:</strong> Imposibilidad de conciliar lo pesado en la báscula de la extractora vs lo liquidado al conductor.</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <i data-lucide="circle-alert" class="w-5 h-5 text-rose-400 shrink-0 mt-0.5"></i>
-              <span><strong>Descontrol en combustible (ACPM):</strong> Sin registro exacto de galonaje consumido por viaje ni cruces de ferry fluvial.</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <i data-lucide="circle-alert" class="w-5 h-5 text-rose-400 shrink-0 mt-0.5"></i>
-              <span><strong>Liquidación lenta:</strong> Más de 5 días para calcular pagos por flete, comisiones de choferes y deducciones.</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <i data-lucide="circle-alert" class="w-5 h-5 text-rose-400 shrink-0 mt-0.5"></i>
-              <span><strong>Vulnerabilidad a fraudes:</strong> Datos alterables sin ningún registro histórico ni cadena de custodia.</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Tarjeta: Con Novapalma -->
-        <div class="rounded-3xl p-6 sm:p-8 bg-emerald-950/30 border border-emerald-800/40 relative overflow-hidden">
-          <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-          
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 mb-6">
-            <i data-lucide="check-check" class="w-4 h-4"></i> AHORA: PLATAFORMA NOVAPALMA
-          </div>
-          <ul class="space-y-4 text-slate-200 text-sm">
-            <li class="flex items-start gap-3">
-              <i data-lucide="check" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
-              <span><strong>Registro instantáneo de báscula:</strong> Validación estricta anti-duplicados de ticket y peso bruto/neto en tiempo real.</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <i data-lucide="check" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
-              <span><strong>Control riguroso de ACPM y Ferry:</strong> Registro de costos operativos asignados con precisión a cada flete.</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <i data-lucide="check" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
-              <span><strong>Liquidación en 1 clic:</strong> Cálculo inmediato de rentabilidad bruta, neta y exportación directa a hojas contables en Excel.</span>
-            </li>
-            <li class="flex items-start gap-3">
-              <i data-lucide="check" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
-              <span><strong>Auditoría Forense Inmutable:</strong> Registro fotográfico digital de cada modificación con IP, usuario y valores anteriores (ACID).</span>
-            </li>
-          </ul>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- SECCIÓN SOSTENIBILIDAD ("SOLUCIONES BASADAS EN LA NATURALEZA") -->
-  <section id="sostenibilidad" class="py-20 bg-gradient-to-b from-slate-950 via-emerald-950/20 to-slate-950 border-t border-emerald-900/40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 mb-3">
-          <i data-lucide="sprout" class="w-4 h-4"></i> ENFOQUE DE LA FERIA
-        </span>
-        <h2 class="text-3xl sm:text-5xl font-extrabold text-white mb-4">
-          Innovación & Soluciones Basadas en la Naturaleza
-        </h2>
-        <p class="text-slate-300 text-base sm:text-lg">
-          ¿Cómo la Ingeniería de Software impulsa la sostenibilidad del cultivo y transporte de palma aceitera en el Cesar?
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        <!-- Pilar 1 -->
-        <div class="p-8 rounded-3xl glass-card border border-emerald-800/40 hover:border-emerald-500/60 transition-all group">
-          <div class="w-14 h-14 rounded-2xl bg-emerald-900/60 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
-            <i data-lucide="fuel" class="w-7 h-7"></i>
-          </div>
-          <h3 class="text-xl font-bold text-white mb-3 font-heading">Mitigación de Emisiones ACPM</h3>
-          <p class="text-slate-300 text-sm leading-relaxed">
-            Al fiscalizar con precisión métrica el combustible consumido por tonelada transportada, se detectan hábitos ineficientes de conducción y sobreconsumos de diésel, reduciendo la huella de CO₂ en las rutas de carga pesada.
-          </p>
-        </div>
-
-        <!-- Pilar 2 -->
-        <div class="p-8 rounded-3xl glass-card border border-emerald-800/40 hover:border-emerald-500/60 transition-all group">
-          <div class="w-14 h-14 rounded-2xl bg-amber-900/60 flex items-center justify-center text-amber-400 mb-6 group-hover:scale-110 transition-transform">
-            <i data-lucide="recycle" class="w-7 h-7"></i>
-          </div>
-          <h3 class="text-xl font-bold text-white mb-3 font-heading">Transición a Cero Papel</h3>
-          <p class="text-slate-300 text-sm leading-relaxed">
-            Sustitución integral de talonarios de papel, planillas carbón y archivadores físicos por almacenamiento digital criptográficamente seguro, disminuyendo el impacto ecológico de la papelería corporativa.
-          </p>
-        </div>
-
-        <!-- Pilar 3 -->
-        <div class="p-8 rounded-3xl glass-card border border-emerald-800/40 hover:border-emerald-500/60 transition-all group">
-          <div class="w-14 h-14 rounded-2xl bg-sky-900/60 flex items-center justify-center text-sky-400 mb-6 group-hover:scale-110 transition-transform">
-            <i data-lucide="truck" class="w-7 h-7"></i>
-          </div>
-          <h3 class="text-xl font-bold text-white mb-3 font-heading">Optimización de Capacidad Útil</h3>
-          <p class="text-slate-300 text-sm leading-relaxed">
-            El control inteligente de capacidad por tipo de volqueta (límite legal de 60 Ton) minimiza el número de viajes innecesarios o con carga deficiente, reduciendo el desgaste de vías rurales y la perturbación al ecosistema.
-          </p>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- SECCIÓN ARQUITECTURA TÉCNICA E INGENIERÍA -->
-  <section id="ingenieria" class="py-20 bg-slate-950 border-t border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30 mb-3">
-          <i data-lucide="binary" class="w-4 h-4"></i> INGENIERÍA DE SOFTWARE
-        </span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-          Arquitectura Robusta Stack PERN
-        </h2>
-        <p class="text-slate-400 text-base sm:text-lg">
-          Diseñado bajo principios de Clean Architecture, transacciones atómicas ACID y patrones de seguridad de grado industrial.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        <!-- Card 1: Frontend -->
-        <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <div class="text-sky-400 mb-4"><i data-lucide="layout" class="w-8 h-8"></i></div>
-          <h4 class="text-lg font-bold text-white mb-2">Frontend React 19</h4>
-          <p class="text-xs text-slate-400 mb-4">Construido con Vite, TypeScript y Router dinámico. Paginación en servidor con debouncing para consultas masivas.</p>
-          <div class="flex flex-wrap gap-1 text-[11px] font-mono text-sky-300">
-            <span class="px-2 py-0.5 rounded bg-sky-950 border border-sky-800">React 19</span>
-            <span class="px-2 py-0.5 rounded bg-sky-950 border border-sky-800">Vite</span>
-            <span class="px-2 py-0.5 rounded bg-sky-950 border border-sky-800">Bootstrap 5</span>
-          </div>
-        </div>
-
-        <!-- Card 2: Backend -->
-        <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <div class="text-emerald-400 mb-4"><i data-lucide="server" class="w-8 h-8"></i></div>
-          <h4 class="text-lg font-bold text-white mb-2">Backend Node & Express</h4>
-          <p class="text-xs text-slate-400 mb-4">Patrón MVC Potenciado (Service-Controller). Validación de esquemas estricta con Zod para prevenir Mass Assignment.</p>
-          <div class="flex flex-wrap gap-1 text-[11px] font-mono text-emerald-300">
-            <span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-800">Node v25</span>
-            <span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-800">Express</span>
-            <span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-800">Zod Strict</span>
-          </div>
-        </div>
-
-        <!-- Card 3: Base de Datos & ORM -->
-        <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <div class="text-indigo-400 mb-4"><i data-lucide="database" class="w-8 h-8"></i></div>
-          <h4 class="text-lg font-bold text-white mb-2">PostgreSQL & Prisma 7</h4>
-          <p class="text-xs text-slate-400 mb-4">Conexión nativa con `@prisma/adapter-pg`. Transacciones transaccionales ACID con bloqueo de fila `FOR UPDATE`.</p>
-          <div class="flex flex-wrap gap-1 text-[11px] font-mono text-indigo-300">
-            <span class="px-2 py-0.5 rounded bg-indigo-950 border border-indigo-800">PostgreSQL</span>
-            <span class="px-2 py-0.5 rounded bg-indigo-950 border border-indigo-800">Prisma v7</span>
-            <span class="px-2 py-0.5 rounded bg-indigo-950 border border-indigo-800">ACID</span>
-          </div>
-        </div>
-
-        <!-- Card 4: Seguridad Forense -->
-        <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <div class="text-amber-400 mb-4"><i data-lucide="shield-check" class="w-8 h-8"></i></div>
-          <h4 class="text-lg font-bold text-white mb-2">Auditoría Forense</h4>
-          <p class="text-xs text-slate-400 mb-4">Bitácora inmutable con deltas `before/after`. Control RBAC (Admin/Operador), Hash Bcrypt y Borrado Lógico (Soft Delete).</p>
-          <div class="flex flex-wrap gap-1 text-[11px] font-mono text-amber-300">
-            <span class="px-2 py-0.5 rounded bg-amber-950 border border-amber-800">RBAC</span>
-            <span class="px-2 py-0.5 rounded bg-amber-950 border border-amber-800">Audit Logs</span>
-            <span class="px-2 py-0.5 rounded bg-amber-950 border border-amber-800">Bcrypt</span>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- SECCIÓN SIMULADOR INTERACTIVO (WOW FACTOR PARA JURADOS) -->
-  <section id="simulador" class="py-20 bg-slate-900/70 border-t border-slate-800">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center mb-12">
-        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-3">
-          <i data-lucide="sliders" class="w-3.5 h-3.5"></i> HERRAMIENTA INTERACTIVA
-        </span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-2">Simulador de Ahorro e Impacto</h2>
-        <p class="text-slate-400 text-sm sm:text-base">Ajusta las variables operativas y calcula el impacto real de Novapalma en una contratista.</p>
-      </div>
-
-      <div class="bg-slate-950 rounded-3xl p-6 sm:p-10 border border-emerald-800/40 shadow-2xl">
-        
-        <!-- Controles Deslizantes -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-10">
-          
-          <!-- Slider 1 -->
-          <div>
-            <div class="flex justify-between items-center mb-2">
-              <label class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                <i data-lucide="weight" class="w-4 h-4 text-emerald-400"></i> Toneladas al Mes:
-              </label>
-              <span id="label-toneladas" class="text-lg font-black text-emerald-400 font-mono">1,500 Ton</span>
-            </div>
-            <input type="range" id="input-toneladas" min="200" max="10000" step="100" value="1500" 
-              class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
-            <div class="flex justify-between text-[11px] text-slate-500 mt-1 font-mono">
-              <span>200 Ton</span>
-              <span>10,000 Ton</span>
-            </div>
-          </div>
-
-          <!-- Slider 2 -->
-          <div>
-            <div class="flex justify-between items-center mb-2">
-              <label class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                <i data-lucide="truck" class="w-4 h-4 text-amber-400"></i> Camiones en Operación:
-              </label>
-              <span id="label-camiones" class="text-lg font-black text-amber-400 font-mono">6 Camiones</span>
-            </div>
-            <input type="range" id="input-camiones" min="1" max="25" step="1" value="6" 
-              class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
-            <div class="flex justify-between text-[11px] text-slate-500 mt-1 font-mono">
-              <span>1 Vehículo</span>
-              <span>25 Vehículos</span>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Tarjetas de Resultados Dinámicos -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800">
-          
-          <div class="p-4 rounded-2xl bg-slate-900/90 border border-emerald-900/40 text-center">
-            <div class="text-xs text-slate-400 font-semibold mb-1">Ahorro en Desviaciones / Fletes</div>
-            <div id="res-dinero" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono">$3,750,000</div>
-            <div class="text-[11px] text-emerald-300/80 mt-1">COP recuperados/mes</div>
-          </div>
-
-          <div class="p-4 rounded-2xl bg-slate-900/90 border border-amber-900/40 text-center">
-            <div class="text-xs text-slate-400 font-semibold mb-1">Diésel (ACPM) Optimizado</div>
-            <div id="res-acpm" class="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono">270 Gal</div>
-            <div class="text-[11px] text-amber-300/80 mt-1">Galones ahorrados/mes</div>
-          </div>
-
-          <div class="p-4 rounded-2xl bg-slate-900/90 border border-sky-900/40 text-center">
-            <div class="text-xs text-slate-400 font-semibold mb-1">CO₂ Mitigado</div>
-            <div id="res-co2" class="text-2xl sm:text-3xl font-extrabold text-sky-400 font-mono">2,754 Kg</div>
-            <div class="text-[11px] text-sky-300/80 mt-1">Emisiones evitadas</div>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- SECCIÓN EQUIPO DE DESARROLLO -->
-  <section id="equipo" class="py-20 bg-slate-950 border-t border-slate-800">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 mb-3">
-          <i data-lucide="users" class="w-3.5 h-3.5"></i> TALENTO UPC
-        </span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-2">Equipo de Autores & Desarrolladores</h2>
-        <p class="text-slate-400 text-sm sm:text-base">Estudiantes de 6to Semestre · Ingeniería de Sistemas · Seccional Aguachica</p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        
+      <div class="team-grid">
         <!-- Integrante 1 -->
-        <div class="p-6 rounded-2xl glass-card border border-slate-800 text-center hover:border-emerald-500/50 transition-all">
-          <div class="w-16 h-16 rounded-full bg-emerald-950 border border-emerald-600/40 flex items-center justify-center text-emerald-400 mx-auto mb-4 font-bold text-xl">
-            JS
+        <div class="team-cell">
+          <div>
+            <div class="member-code">
+              <span>AUTOR // 01</span>
+              <span>UPC AGUACHICA</span>
+            </div>
+            <h3 class="member-name">Jose Silva</h3>
+            <p class="member-role">Scrum Master &amp; Gestión Ágil</p>
+            <p class="member-desc">
+              Coordinación del flujo de trabajo del equipo, planificación de entregas iterativas y estructuración de historias de usuario del proyecto.
+            </p>
           </div>
-          <h4 class="text-base font-bold text-white">Jose Silva</h4>
-          <p class="text-xs text-emerald-400 font-medium mb-2">Ingeniería de Sistemas</p>
-          <p class="text-[12px] text-slate-400">Scrum Master & Gestión Ágil</p>
+          <a href="https://github.com/josesilvait" target="_blank" rel="noopener noreferrer" class="member-gh">
+            <span>github.com/josesilvait</span>
+            <span>↗</span>
+          </a>
         </div>
 
         <!-- Integrante 2 -->
-        <div class="p-6 rounded-2xl glass-card border border-slate-800 text-center hover:border-emerald-500/50 transition-all">
-          <div class="w-16 h-16 rounded-full bg-emerald-950 border border-emerald-600/40 flex items-center justify-center text-emerald-400 mx-auto mb-4 font-bold text-xl">
-            YG
+        <div class="team-cell">
+          <div>
+            <div class="member-code">
+              <span>AUTOR // 02</span>
+              <span>UPC AGUACHICA</span>
+            </div>
+            <h3 class="member-name">Yesid Gelvez</h3>
+            <p class="member-role">Desarrollador Full Stack</p>
+            <p class="member-desc">
+              Implementación de servicios backend en Node.js/Express, integración con Prisma ORM sobre PostgreSQL y lógica de módulos operativos.
+            </p>
           </div>
-          <h4 class="text-base font-bold text-white">Yesid Gelvez</h4>
-          <p class="text-xs text-emerald-400 font-medium mb-2">Ingeniería de Sistemas</p>
-          <p class="text-[12px] text-slate-400">Desarrollador Full Stack</p>
+          <a href="https://github.com/Arle124" target="_blank" rel="noopener noreferrer" class="member-gh">
+            <span>github.com/Arle124</span>
+            <span>↗</span>
+          </a>
         </div>
 
         <!-- Integrante 3 -->
-        <div class="p-6 rounded-2xl glass-card border border-slate-800 text-center hover:border-emerald-500/50 transition-all">
-          <div class="w-16 h-16 rounded-full bg-emerald-950 border border-emerald-600/40 flex items-center justify-center text-emerald-400 mx-auto mb-4 font-bold text-xl">
-            HQ
+        <div class="team-cell">
+          <div>
+            <div class="member-code">
+              <span>AUTOR // 03</span>
+              <span>UPC AGUACHICA</span>
+            </div>
+            <h3 class="member-name">Hecmaibel Quero</h3>
+            <p class="member-role">Diseñadora UI / UX</p>
+            <p class="member-desc">
+              Diseño de la experiencia de usuario, estructuración visual de paneles administrativos, formularios de despacho y adaptabilidad móvil.
+            </p>
           </div>
-          <h4 class="text-base font-bold text-white">Hecmaibel Quero</h4>
-          <p class="text-xs text-emerald-400 font-medium mb-2">Ingeniería de Sistemas</p>
-          <p class="text-[12px] text-slate-400">Diseñadora UI/UX</p>
+          <a href="https://github.com/HecmaibelQuero" target="_blank" rel="noopener noreferrer" class="member-gh">
+            <span>github.com/HecmaibelQuero</span>
+            <span>↗</span>
+          </a>
         </div>
 
         <!-- Integrante 4 -->
-        <div class="p-6 rounded-2xl glass-card border border-slate-800 text-center hover:border-emerald-500/50 transition-all">
-          <div class="w-16 h-16 rounded-full bg-emerald-950 border border-emerald-600/40 flex items-center justify-center text-emerald-400 mx-auto mb-4 font-bold text-xl">
-            JB
+        <div class="team-cell">
+          <div>
+            <div class="member-code">
+              <span>AUTOR // 04</span>
+              <span>UPC AGUACHICA</span>
+            </div>
+            <h3 class="member-name">Javier Beleño</h3>
+            <p class="member-role">Product Owner &amp; QA Lead</p>
+            <p class="member-desc">
+              Definición de reglas de negocio del sector transporte palmicultor, arquitectura de pruebas automatizadas E2E y aseguramiento de calidad.
+            </p>
           </div>
-          <h4 class="text-base font-bold text-white">Javier Beleño</h4>
-          <p class="text-xs text-emerald-400 font-medium mb-2">Ingeniería de Sistemas</p>
-          <p class="text-[12px] text-slate-400">Product Owner & QA / Testing Lead</p>
+          <a href="https://github.com/ByJabi" target="_blank" rel="noopener noreferrer" class="member-gh">
+            <span>github.com/ByJabi</span>
+            <span>↗</span>
+          </a>
         </div>
-
       </div>
+    </section>
 
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="py-12 bg-slate-950 border-t border-slate-900 text-center text-xs text-slate-500">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-      <div class="flex items-center justify-center gap-2 text-slate-400 font-semibold">
-        <span>Universidad Popular del Cesar</span>
-        <span>•</span>
-        <span>Seccional Aguachica</span>
-        <span>•</span>
-        <span>Coordinación de Emprendimiento</span>
+    <!-- PIE DE PÁGINA -->
+    <footer class="site-footer">
+      <div>
+        <strong style="font-size: 1rem; letter-spacing: -0.02em;">NOVAPALMA · SISTEMA DE GESTIÓN LOGÍSTICA Y FINANCIERA</strong>
+        <p class="footer-meta" style="margin-top: 0.25rem;">
+          Universidad Popular del Cesar · Seccional Aguachica · Facultad de Ingenierías y Tecnologías · 2026
+        </p>
       </div>
-      <p>Novapalma 🌴 · Plataforma de Gestión Logística & Financiera · Desarrollado para la XV Feria de Emprendimiento (2026)</p>
-      <p class="text-[11px] text-slate-600">Pelaya & Aguachica, Cesar, Colombia</p>
-    </div>
-  </footer>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <a href="https://novapalma-bay.vercel.app/login" target="_blank" rel="noopener noreferrer" class="btn-primary app-link" style="background-color: #10b981; color: #062415; border-color: #ffffff; box-shadow: none;">
+          <span>Ir a novapalma-bay.vercel.app</span>
+          <span class="mono">↗</span>
+        </a>
+      </div>
+    </footer>
 
-  <!-- SCRIPT INTERACTIVO DEL SIMULADOR -->
+  </main>
+
+  <!-- LÓGICA INTERACTIVA DE LA CALCULADORA DE LIQUIDACIÓN Y CREDENCIALES -->
   <script>
-    // Inicializar Iconos Lucide
-    lucide.createIcons();
+    const inputRuta = document.getElementById('sim-ruta');
+    const inputPeso = document.getElementById('sim-peso');
+    const inputTarifa = document.getElementById('sim-tarifa');
+    const inputGastos = document.getElementById('sim-gastos');
 
-    // Lógica del Simulador
-    const inputTon = document.getElementById('input-toneladas');
-    const inputCam = document.getElementById('input-camiones');
-    const labelTon = document.getElementById('label-toneladas');
-    const labelCam = document.getElementById('label-camiones');
-    const resDinero = document.getElementById('res-dinero');
-    const resAcpm = document.getElementById('res-acpm');
-    const resCo2 = document.getElementById('res-co2');
+    const lblPeso = document.getElementById('lbl-peso');
+    const lblTarifa = document.getElementById('lbl-tarifa');
+    const lblGastos = document.getElementById('lbl-gastos');
 
-    function updateCalculos() {
-      const ton = parseInt(inputTon.value, 10);
-      const cam = parseInt(inputCam.value, 10);
+    const resIngreso = document.getElementById('res-ingreso');
+    const resGasto = document.getElementById('res-gasto');
+    const resNeto = document.getElementById('res-neto');
+    const resRutaActual = document.getElementById('res-ruta-actual');
+    const resSqlPreview = document.getElementById('res-sql-preview');
+    const presetBtns = document.querySelectorAll('.preset-btn');
 
-      labelTon.textContent = ton.toLocaleString('es-CO') + ' Ton';
-      labelCam.textContent = cam + (cam === 1 ? ' Camión' : ' Camiones');
-
-      // Estimaciones basadas en parámetros reales de transporte de palma:
-      // ~2.5% de fuga/inconsistencia en pesaje recuperada ($2,500 COP/Ton promedio)
-      const ahorroDinero = Math.round(ton * 2500);
-      // ~0.18 galones de ACPM ahorrados por tonelada gracias a optimización de rutas y pesos
-      const ahorroAcpm = Math.round(ton * 0.18);
-      // 1 galón de diésel ≈ 10.2 kg de CO2
-      const ahorroCo2 = Math.round(ahorroAcpm * 10.2);
-
-      resDinero.textContent = '$' + ahorroDinero.toLocaleString('es-CO');
-      resAcpm.textContent = ahorroAcpm.toLocaleString('es-CO') + ' Gal';
-      resCo2.textContent = ahorroCo2.toLocaleString('es-CO') + ' Kg';
+    function formatCOP(val) {
+      return '$' + Math.round(val).toLocaleString('es-CO');
     }
 
-    inputTon.addEventListener('input', updateCalculos);
-    inputCam.addEventListener('input', updateCalculos);
-    updateCalculos();
+    function updateSettlement() {
+      const ruta = inputRuta.value;
+      const peso = parseFloat(inputPeso.value);
+      const tarifa = parseInt(inputTarifa.value, 10);
+      const gastos = parseInt(inputGastos.value, 10);
 
-    // Configuración dinámica de la URL de la aplicación Novapalma
+      const ingresoBruto = Math.round(peso * tarifa);
+      const utilidadNeta = ingresoBruto - gastos;
+
+      lblPeso.textContent = peso.toFixed(1) + ' Ton';
+      lblTarifa.textContent = formatCOP(tarifa) + ' / Ton';
+      lblGastos.textContent = formatCOP(gastos) + ' COP';
+
+      resIngreso.textContent = formatCOP(ingresoBruto);
+      resGasto.textContent = '-' + formatCOP(gastos);
+      resNeto.textContent = (utilidadNeta >= 0 ? '' : '-') + formatCOP(Math.abs(utilidadNeta));
+      resNeto.style.color = utilidadNeta >= 0 ? '#6ee7b7' : '#fca5a5';
+      resRutaActual.textContent = ruta;
+
+      resSqlPreview.innerHTML =
+        `// Transacción ACID generada en PostgreSQL (Prisma v7):<br>` +
+        `BEGIN;<br>` +
+        `UPDATE "Trip" SET status = 'PAID', "tripCost" = ${ingresoBruto} WHERE ticket = 'TK-9014';<br>` +
+        `INSERT INTO "Transaction" (type, category, amount, description)<br>` +
+        `VALUES ('INCOME', 'Viaje Liquidado', ${ingresoBruto}, 'Flete ${peso.toFixed(1)} Ton · ${ruta.split('→')[0].trim()}');<br>` +
+        `COMMIT;`;
+    }
+
+    inputRuta.addEventListener('change', updateSettlement);
+    inputPeso.addEventListener('input', updateSettlement);
+    inputTarifa.addEventListener('input', () => {
+      presetBtns.forEach(b => b.classList.remove('active'));
+      updateSettlement();
+    });
+    inputGastos.addEventListener('input', updateSettlement);
+
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        presetBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        inputTarifa.value = btn.getAttribute('data-val');
+        updateSettlement();
+      });
+    });
+
+    function copyCred(email, btnEl) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(email);
+        const original = btnEl.textContent;
+        btnEl.textContent = '¡Copiado!';
+        setTimeout(() => { btnEl.textContent = original; }, 1600);
+      }
+    }
+
+    // Soporte para parámetro ?app= dinámico o enlace directo a producción en Vercel
     const urlParams = new URLSearchParams(window.location.search);
     const targetAppUrl = urlParams.get('app') || 'https://novapalma-bay.vercel.app/login';
-    
     document.querySelectorAll('.app-link, #btn-entrar-app').forEach(link => {
       link.href = targetAppUrl;
     });
-  </script>
 
+    updateSettlement();
+  </script>
 </body>
 </html>
