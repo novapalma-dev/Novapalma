@@ -246,10 +246,10 @@ const Drivers = () => {
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm">
+      <div className="card">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
-            <thead className="bg-light">
+            <thead>
               <tr>
                 <th className="px-4 py-3 text-secondary small text-uppercase fw-bold">Cédula</th>
                 <th className="py-3 text-secondary small text-uppercase fw-bold">Nombre Completo</th>
@@ -266,28 +266,30 @@ const Drivers = () => {
               ) : (
                 paginatedDrivers.map((d) => (
                   <tr key={d.id}>
-                    <td className="px-4 fw-bold text-primary">{d.cedula}</td>
-                    <td>{d.primerNombre} {d.segundoNombre} {d.primerApellido} {d.segundoApellido}</td>
-                    <td><Phone size={14} className="me-2 text-muted" /> {d.telefono || 'N/A'}</td>
+                    <td className="px-4"><span className="ticket-badge">{d.cedula}</span></td>
+                    <td className="fw-medium text-dark">{d.primerNombre} {d.segundoNombre} {d.primerApellido} {d.segundoApellido}</td>
+                    <td className="font-mono-num small"><Phone size={14} className="me-1.5 text-muted" /> {d.telefono || 'N/A'}</td>
                     <td>
-                      <span className={`badge-status ${d.activo ? 'bg-success text-white' : 'bg-danger text-white'}`}>
+                      <span className={`badge-status ${d.activo ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>
                         {d.activo ? 'ACTIVO' : 'INACTIVO'}
                       </span>
                     </td>
                     {isAdmin() && (
                       <td className="text-end pe-4">
-                        <button className="btn btn-link text-primary p-0 me-3" onClick={() => handleEditClick(d)} title="Editar Conductor">
-                          <Edit size={18} />
-                        </button>
-                        {d.activo ? (
-                          <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(d.id)} title="Desactivar Conductor">
-                            <Trash2 size={18} />
+                        <div className="d-inline-flex align-items-center gap-1">
+                          <button className="action-icon-btn text-primary" onClick={() => handleEditClick(d)} title="Editar Conductor">
+                            <Edit size={17} />
                           </button>
-                        ) : (
-                          <button className="btn btn-link text-success p-0" onClick={() => handleRestore(d.id)} title="Reactivar Conductor">
-                            <RotateCcw size={18} />
-                          </button>
-                        )}
+                          {d.activo ? (
+                            <button className="action-icon-btn text-danger" onClick={() => handleDelete(d.id)} title="Desactivar Conductor">
+                              <Trash2 size={17} />
+                            </button>
+                          ) : (
+                            <button className="action-icon-btn text-success" onClick={() => handleRestore(d.id)} title="Reactivar Conductor">
+                              <RotateCcw size={17} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>

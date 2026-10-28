@@ -266,10 +266,10 @@ const Vehicles = () => {
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm">
+      <div className="card">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
-            <thead className="bg-light">
+            <thead>
               <tr>
                 <th className="px-4 py-3 text-secondary small text-uppercase fw-bold">Placa</th>
                 <th className="py-3 text-secondary small text-uppercase fw-bold">Marca / Modelo</th>
@@ -286,32 +286,34 @@ const Vehicles = () => {
               ) : (
                 paginatedVehicles.map((v) => (
                   <tr key={v.id}>
-                    <td className="px-4"><span className="badge bg-white text-primary border border-primary px-3 py-2">{v.placa}</span></td>
-                    <td><div className="fw-bold">{v.marca}</div><div className="text-muted small">{v.modelo}</div></td>
-                    <td>{v.capacidad} Ton</td>
+                    <td className="px-4"><span className="plate-badge">{v.placa}</span></td>
+                    <td><div className="fw-bold text-dark">{v.marca}</div><div className="text-muted small">{v.modelo}</div></td>
+                    <td className="font-mono-num fw-medium">{v.capacidad} Ton</td>
                     <td>
                       <span className={`badge-status ${
-                        !v.activo ? 'bg-danger text-white' :
-                        v.estado === 'DISPONIBLE' ? 'bg-success text-white' : 
-                        v.estado === 'EN_VIAJE' ? 'bg-info text-white' : 'bg-warning text-dark'
+                        !v.activo ? 'bg-danger-subtle text-danger' :
+                        v.estado === 'DISPONIBLE' ? 'bg-success-subtle text-success' : 
+                        v.estado === 'EN_VIAJE' ? 'bg-info-subtle text-info' : 'bg-warning-subtle text-warning-emphasis'
                       }`}>
-                        {v.activo ? v.estado : 'INACTIVO'}
+                        {v.activo ? v.estado.replace('_', ' ') : 'INACTIVO'}
                       </span>
                     </td>
                     {isAdmin() && (
                       <td className="text-end pe-4">
-                        <button className="btn btn-link text-primary p-0 me-3" onClick={() => handleEditClick(v)} title="Editar Vehículo">
-                          <Edit size={18} />
-                        </button>
-                        {v.activo ? (
-                          <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(v.id)} title="Desactivar Vehículo">
-                            <Trash2 size={18} />
+                        <div className="d-inline-flex align-items-center gap-1">
+                          <button className="action-icon-btn text-primary" onClick={() => handleEditClick(v)} title="Editar Vehículo">
+                            <Edit size={17} />
                           </button>
-                        ) : (
-                          <button className="btn btn-link text-success p-0" onClick={() => handleRestore(v.id)} title="Reactivar Vehículo">
-                            <RotateCcw size={18} />
-                          </button>
-                        )}
+                          {v.activo ? (
+                            <button className="action-icon-btn text-danger" onClick={() => handleDelete(v.id)} title="Desactivar Vehículo">
+                              <Trash2 size={17} />
+                            </button>
+                          ) : (
+                            <button className="action-icon-btn text-success" onClick={() => handleRestore(v.id)} title="Reactivar Vehículo">
+                              <RotateCcw size={17} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>

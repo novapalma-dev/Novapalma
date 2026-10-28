@@ -355,10 +355,10 @@ const Trips = ({ isDashboard = false }) => {
         </div>
         <div className="d-flex gap-3 align-items-center">
           <div className="input-group" style={{ width: '260px' }}>
-            <span className="input-group-text bg-light border-0"><Search size={18} className="text-muted" /></span>
+            <span className="input-group-text bg-white border-end-0"><Search size={17} className="text-primary" /></span>
             <input 
               type="text" 
-              className="form-control bg-light border-0 ps-0" 
+              className="form-control border-start-0 ps-0" 
               placeholder="Buscar por Ticket..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -370,17 +370,17 @@ const Trips = ({ isDashboard = false }) => {
               className="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
               onClick={handleOpenCreateModal}
             >
-              <Plus size={20} /> Nuevo Viaje
+              <Plus size={19} /> Nuevo Viaje
             </button>
           )}
         </div>
       </div>
 
       {/* Tabla de Viajes */}
-      <div className="card border-0 shadow-sm">
+      <div className="card">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
-            <thead className="bg-light">
+            <thead>
               <tr>
                 <th className="px-4 py-3 text-secondary small text-uppercase fw-bold">Ticket</th>
                 <th className="py-3 text-secondary small text-uppercase fw-bold">Fecha</th>
@@ -426,45 +426,47 @@ const Trips = ({ isDashboard = false }) => {
                       style={{ cursor: 'pointer' }}
                       className="align-middle"
                     >
-                      <td className="px-4 fw-bold text-primary">#{trip.ticket}</td>
-                      <td>{new Date(trip.fecha).toLocaleDateString(undefined, { timeZone: 'UTC' })}</td>
-                      <td><span className="badge bg-light text-dark border">{trip.vehicle?.placa}</span></td>
+                      <td className="px-4"><span className="ticket-badge">#{trip.ticket}</span></td>
+                      <td className="font-mono-num small">{new Date(trip.fecha).toLocaleDateString(undefined, { timeZone: 'UTC' })}</td>
+                      <td><span className="plate-badge">{trip.vehicle?.placa}</span></td>
                       <td className="small fw-medium">
                         {trip.origen} 
                         {trip.destino ? <span className="text-secondary"> &rarr; {trip.destino}</span> : ''}
                       </td>
                       <td className="text-muted small">{trip.empresa || 'N/A'}</td>
                       <td>
-                        <span className={`badge px-2 py-1 rounded-pill ${trip.producto === 'FRUTO' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis'}`}>
+                        <span className={`badge px-2.5 py-1 rounded-pill ${trip.producto === 'FRUTO' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis'}`}>
                           {trip.producto}
                         </span>
                       </td>
-                      <td className="small">{trip.tonelaje} Ton</td>
-                      <td className="fw-bold text-dark small">${Number(trip.valorPago).toLocaleString()}</td>
+                      <td className="small font-mono-num fw-medium">{trip.tonelaje} Ton</td>
+                      <td className="fw-bold text-dark small font-mono-num">${Number(trip.valorPago).toLocaleString()}</td>
                       <td className="small">{trip.driver?.primerNombre} {trip.driver?.primerApellido}</td>
-                      <td className="text-success small fw-semibold">
+                      <td className="text-success small fw-semibold font-mono-num">
                         ${driverVal.toLocaleString()} <small className="text-muted">({Number(trip.porcentajeConductor || 1.0)}%)</small>
                       </td>
-                      <td className="text-danger small">${totalExpenses.toLocaleString()}</td>
-                      <td className={`fw-bold small ${netUtility >= 0 ? 'text-success' : 'text-danger'}`}>
+                      <td className="text-danger small font-mono-num">${totalExpenses.toLocaleString()}</td>
+                      <td className={`fw-bold small font-mono-num ${netUtility >= 0 ? 'text-success' : 'text-danger'}`}>
                         ${netUtility.toLocaleString()}
                       </td>
                       {isAdmin() && (
                         <td className="text-end pe-4">
-                          <button 
-                            className="btn btn-link text-primary p-0 me-3" 
-                            onClick={(e) => { e.stopPropagation(); handleEditClick(trip); }} 
-                            title="Editar Viaje"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn btn-link text-danger p-0" 
-                            onClick={(e) => { e.stopPropagation(); handleDelete(trip.id); }} 
-                            title="Eliminar Viaje"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="d-inline-flex align-items-center gap-1">
+                            <button 
+                              className="action-icon-btn text-primary" 
+                              onClick={(e) => { e.stopPropagation(); handleEditClick(trip); }} 
+                              title="Editar Viaje"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button 
+                              className="action-icon-btn text-danger" 
+                              onClick={(e) => { e.stopPropagation(); handleDelete(trip.id); }} 
+                              title="Eliminar Viaje"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       )}
                     </tr>
