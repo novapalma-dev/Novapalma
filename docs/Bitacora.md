@@ -51,7 +51,7 @@
 * **Octubre 2026 — Renovación Visual de Identidad Agroindustrial y Póster Digital (`client` & `landing`):**
   * **Sistema de Diseño (`index.css`):** Paleta de identidad palmicultora (`--primary: #0d6e47`, `--accent: #10b981`, `--accent-amber: #d97706`) con soporte dual modo claro/oscuro, tipografía `Plus Jakarta Sans` + `Inter` + `JetBrains Mono` (`tabular-nums`) para precisión numérica en báscula, tiquetes (`.ticket-badge`), placas vehiculares (`.plate-badge`) y tarjetas ejecutivas (`.kpi-card`).
   * **Componentes y Vistas (`Layout.jsx`, `Login.jsx`, `Dashboard.jsx`, `Trips.jsx`, `Vehicles.jsx`, `Drivers.jsx`, `Finance.jsx`):** Sidebar jerárquico con logotipo institucional y avatar de iniciales, encabezado dinámico contextual por ruta, gráficas SVG adaptativas a modo oscuro, botones de acción `.action-icon-btn` y preservación estricta de selectores E2E de Selenium y reglas `@media print`.
-  * **Landing Page & Póster Digital (`landing/`):** Sitio interactivo para la XV Feria de Emprendimiento UPC Emprende con simulador de ahorro en vivo, ficha académica y generador automatizado de afiche con código QR (`generate_flyer.py`).
+  * **Landing Page & Póster Digital (`landing/`):** Dossier técnico de estilo editorial (Swiss Grid) para la XV Feria de Emprendimiento UPC Emprende con ficha académica del proyecto, calculadora interactiva de liquidación real de fletes (`weightTons × pricePerTon` y vista de transacción ACID en PostgreSQL) y generador automatizado de afiche con código QR (`generate_flyer.py`).
 
 ---
 
