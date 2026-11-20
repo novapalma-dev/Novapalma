@@ -2,14 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { Plus, Save, AlertCircle, X, Edit, Trash2, Search, Info, CheckCircle2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-// Formateador de moneda estilo colombiano (separador de miles con punto)
-const formatCurrencyCOP = (val) => {
-  if (val === undefined || val === null || val === '') return '';
-  const stringVal = val.toString().replace(/\D/g, '');
-  if (!stringVal) return '';
-  return Number(stringVal).toLocaleString('de-DE');
-};
+import { formatCurrencyCOP, calculateTripPayment, sanitizeTripInput } from '../utils/tripFormUtils';
 
 const getInitialFormData = () => ({
   ticket: '',
@@ -162,49 +155,19 @@ const Trips = ({ isDashboard = false }) => {
       return;
     }
 
-    if (name === 'ticket') {
-      // Sanitización estricta de ticket: remueve cualquier carácter no numérico (\D).
-      // Impide físicamente guiones, signos +, letras o espacios en vivo.
-      const positiveInteger = value.replace(/\D/g, '');
-      setFormData({
-        ...formData,
-        ticket: positiveInteger
-      });
-      return;
-    }
-    
     if (
-      name === 'tonelaje' || 
-      name === 'consumoAcpm' || 
-      name === 'porcentajeConductor'
-    ) {
-      // Sanitización para entradas numéricas decimales o enteras (kg, galones, porcentaje)
-      let cleanedValue = value.replace(/-/g, '');
-      if (cleanedValue !== '' && parseFloat(cleanedValue) < 0) {
-        cleanedValue = '0';
-      }
-      if (name === 'porcentajeConductor' && cleanedValue !== '' && parseFloat(cleanedValue) > 100) {
-        cleanedValue = '100';
-      }
-      
-      setFormData({
-        ...formData,
-        [name]: cleanedValue
-      });
-      return;
-    }
-
-    if (
-      name === 'valorPago' || 
-      name === 'precioKg' || 
-      name === 'valorAcpm' || 
+      name === 'ticket' ||
+      name === 'tonelaje' ||
+      name === 'consumoAcpm' ||
+      name === 'porcentajeConductor' ||
+      name === 'valorPago' ||
+      name === 'precioKg' ||
+      name === 'valorAcpm' ||
       name === 'valorFerry'
     ) {
-      // Sanitización para valores monetarios (solo dígitos enteros)
-      const digitsOnly = value.replace(/\D/g, '');
       setFormData({
         ...formData,
-        [name]: digitsOnly
+        [name]: sanitizeTripInput(name, value)
       });
       return;
     }
@@ -231,15 +194,7 @@ const Trips = ({ isDashboard = false }) => {
    * Para FRUTO se calcula dinámicamente multiplicando Tons * 1000 * precioKg.
    * Para COMPOST se ingresa de forma manual.
    */
-  const getCalculatedPayment = () => {
-    if (formData.producto === 'FRUTO') {
-      const kg = parseFloat(formData.tonelaje) || 0;
-      const priceKg = parseFloat(formData.precioKg) || 0;
-      // Cálculo directo: Kilogramos * Precio por Kg
-      return Math.round(kg * priceKg);
-    }
-    return parseFloat(formData.valorPago) || 0;
-  };
+  const getCalculatedPayment = () => calculateTripPayment(formData);
 
   const handleOpenCreateModal = () => {
     setIsEditing(false);

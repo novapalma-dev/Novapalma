@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration/http-routes.test.js",
+    "test:integration:db": "vitest run --config vitest.db.config.js",
+    "test:cov": "vitest run --coverage"
   },
   "keywords": [],
   "prisma": {
@@ -16,7 +20,10 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "prisma": "^7.8.0"
+    "@vitest/coverage-v8": "^4.1.12",
+    "prisma": "^7.8.0",
+    "supertest": "^7.3.2",
+    "vitest": "^4.1.12"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.6.0",

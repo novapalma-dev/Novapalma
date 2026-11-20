@@ -3,6 +3,11 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { DollarSign, Filter, Download, Table, Calendar, AlertCircle, Search } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
+import {
+  filterTripsByTicket,
+  computeDisplayedFinanceStats,
+  formatTripsForExcel
+} from '../utils/financeUtils';
 
 const Finance = () => {
   const { isAdmin } = useAuth();
@@ -57,35 +62,9 @@ const Finance = () => {
     fetchReport('', '');
   };
 
-  const filteredTrips = trips.filter(t => 
-    t.ticket.toString().includes(searchTerm)
-  );
+  const filteredTrips = filterTripsByTicket(trips, searchTerm);
 
-  const displayedStats = searchTerm.trim() === '' ? stats : filteredTrips.reduce((acc, t) => {
-    const billing = Number(t.valorPago || 0);
-    const driverCost = Number(t.valorConductor || 0);
-    const acpmCost = t.usoAcpm ? Number(t.valorAcpm || 0) : 0;
-    const ferryCost = t.usoFerry ? Number(t.valorFerry || 0) : 0;
-    const expenses = driverCost + acpmCost + ferryCost;
-
-    return {
-      totalTons: Number((acc.totalTons + Number(t.tonelaje || 0)).toFixed(3)),
-      totalBilling: Number((acc.totalBilling + billing).toFixed(2)),
-      totalDriverPayout: Number((acc.totalDriverPayout + driverCost).toFixed(2)),
-      totalAcpmCost: Number((acc.totalAcpmCost + acpmCost).toFixed(2)),
-      totalFerryCost: Number((acc.totalFerryCost + ferryCost).toFixed(2)),
-      totalExpenses: Number((acc.totalExpenses + expenses).toFixed(2)),
-      totalNet: Number((acc.totalNet + (billing - expenses)).toFixed(2))
-    };
-  }, {
-    totalTons: 0,
-    totalBilling: 0,
-    totalDriverPayout: 0,
-    totalAcpmCost: 0,
-    totalFerryCost: 0,
-    totalExpenses: 0,
-    totalNet: 0
-  });
+  const displayedStats = computeDisplayedFinanceStats(filteredTrips, stats, searchTerm);
 
   /**
    * EXPORTACIÓN DE REPORTES EN FORMATO EXCEL (.xlsx)
@@ -100,36 +79,7 @@ const Finance = () => {
     }
 
     // Formateo explícito de los registros para coincidir 100% con la planilla Viajes Novapalma.xlsx
-    const formattedData = filteredTrips.map(t => {
-      const driverVal = Number(t.valorConductor || 0);
-      const acpmVal = t.usoAcpm ? Number(t.valorAcpm || 0) : 0;
-      const ferryVal = t.usoFerry ? Number(t.valorFerry || 0) : 0;
-      const totalExpenses = driverVal + acpmVal + ferryVal;
-      const netUtility = Number(t.valorPago) - totalExpenses;
-      
-      const valorTon = Number(t.tonelaje) > 0 
-        ? parseFloat((Number(t.valorPago) / (Number(t.tonelaje) * 1000)).toFixed(3)) 
-        : 0;
-
-      return {
-        'Fecha': new Date(t.fecha).toLocaleDateString(undefined, { timeZone: 'UTC' }),
-        'PLACA': t.vehicle?.placa || '',
-        'Conductor': t.driver ? `${t.driver.primerNombre} ${t.driver.primerApellido}` : '',
-        'Empresa': t.empresa || 'N/A',
-        'ORIGEN': t.origen || '',
-        'DESTINO': t.destino || 'N/A',
-        'PRODUCTO': t.producto || '',
-        'TIQUETE': t.ticket || 0,
-        'KILOGRAMOS': Number(t.tonelaje) * 1000,
-        'VALOR TONELADA': valorTon,
-        'VALOR FLETE VIAJE': Number(t.valorPago),
-        'PORCENTAJE CONDUCTOR': driverVal,
-        'ACPM': acpmVal,
-        'FERRY': ferryVal,
-        'GASTOS': totalExpenses,
-        'NETO': netUtility
-      };
-    });
+    const formattedData = formatTripsForExcel(filteredTrips);
 
     // Conversión de JSON estructurado a hoja física de XLSX
     const worksheet = XLSX.utils.json_to_sheet(formattedData);

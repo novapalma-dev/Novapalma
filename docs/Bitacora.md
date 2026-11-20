@@ -21,6 +21,10 @@
 
 ## Sesiones Recientes
 
+* **Noviembre 2026 — Suite de Pruebas Automatizadas, Design for Testability y Quality Gate (Coverage ≥ 60%):**
+  * **Design for Testability:** Extracción de lógica pura a `server/src/utils/tripCalculations.js`, `financeCalculations.js` y `dateRange.js` (Backend) y `client/src/utils/tripFormUtils.js` y `financeUtils.js` (Frontend). Bypass de `express-rate-limit` en `NODE_ENV === 'test'`.
+  * **Pirámide de Pruebas (Vitest + Supertest):** 64 pruebas unitarias Backend (puras, 6 esquemas Zod, middlewares y servicios core con Mocks Stub + Spy sobre `prisma`/`tx` y `auditService.logAudit`), 11 pruebas unitarias Frontend, 10 pruebas de integración HTTP (`http-routes.test.js`) y suite de integración contra PostgreSQL real (`db.integration.test.js`).
+  * **Cobertura y Automatización:** Quality Gate ≥ 60% superado (**85.36% líneas / 79.66% ramas en Backend**; **97.91% líneas en Frontend utils**), script unificado `./run-tests.sh`, skill `.agents/skills/novapalma-testing/SKILL.md` y documentación en `TESTING.md`.
 * **Octubre 2026 — Remediación y Hardening de Seguridad de Backend (C1–C7):**
   * **C1/C2:** Mitigación de Mass Assignment en middleware Zod (`req.body = schema.parse(...)`), esquemas con `.strict()` en viajes, vehículos, conductores, tarifas y usuarios. Separación del endpoint de autoservicio de perfil (`updateOwnProfile`) desacoplado de privilegios de administrador.
   * **C3:** Verificación estricta de token con `HS256`, consulta de usuario y rol fresco desde BD en cada petición autenticada, y revocación automática de sesiones ante cambios de rol, desactivación de cuenta o actualización de credenciales.
@@ -51,7 +55,7 @@
 * **Octubre 2026 — Renovación Visual de Identidad Agroindustrial y Póster Digital (`client` & `landing`):**
   * **Sistema de Diseño (`index.css`):** Paleta de identidad palmicultora (`--primary: #0d6e47`, `--accent: #10b981`, `--accent-amber: #d97706`) con soporte dual modo claro/oscuro, tipografía `Plus Jakarta Sans` + `Inter` + `JetBrains Mono` (`tabular-nums`) para precisión numérica en báscula, tiquetes (`.ticket-badge`), placas vehiculares (`.plate-badge`) y tarjetas ejecutivas (`.kpi-card`).
   * **Componentes y Vistas (`Layout.jsx`, `Login.jsx`, `Dashboard.jsx`, `Trips.jsx`, `Vehicles.jsx`, `Drivers.jsx`, `Finance.jsx`):** Sidebar jerárquico con logotipo institucional y avatar de iniciales, encabezado dinámico contextual por ruta, gráficas SVG adaptativas a modo oscuro, botones de acción `.action-icon-btn` y preservación estricta de selectores E2E de Selenium y reglas `@media print`.
-  * **Landing Page & Póster Digital (`landing/`):** Sitio interactivo para la XV Feria de Emprendimiento UPC Emprende con simulador de ahorro en vivo, ficha académica y generador automatizado de afiche con código QR (`generate_flyer.py`).
+  * **Landing Page & Póster Digital (`landing/`):** Dossier técnico de estilo editorial (Swiss Grid) para la XV Feria de Emprendimiento UPC Emprende con ficha académica del proyecto, calculadora interactiva de liquidación real de fletes (`weightTons × pricePerTon` y vista de transacción ACID en PostgreSQL) y generador automatizado de afiche con código QR (`generate_flyer.py`).
 
 ---
 

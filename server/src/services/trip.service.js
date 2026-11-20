@@ -1,5 +1,11 @@
 import { prisma } from '../config/db.js';
 import * as auditService from './audit.service.js';
+import {
+  calculateConductorPay,
+  normalizeTripCosts,
+  parseUpdateFields,
+  buildTripsPaginationQuery
+} from '../utils/tripCalculations.js';
 
 /**
  * ============================================================================
@@ -57,69 +63,6 @@ const validateActiveDriver = async (tx, driverId) => {
 };
 
 /**
- * Calcula de forma determinista y aislada el pago correspondiente al conductor basándose
- * en el valor total del flete de pago y el porcentaje estipulado.
- * Esta función pura encapsula la regla de negocio aritmética de la comisión.
- * 
- * @param {number} valorPago - Valor total del flete de pago (base de cálculo).
- * @param {number|null|undefined} porcentajeConductor - Porcentaje de ganancia del conductor.
- * @returns {Object} Un objeto que contiene el porcentaje final aplicado (pct) y el valor calculado del conductor (valorConductor).
- */
-const calculateConductorPay = (valorPago, porcentajeConductor) => {
-  // Si no se define el porcentaje del conductor, se establece un valor por defecto de 1.00% (según requerimiento de negocio)
-  const pct = porcentajeConductor !== undefined && porcentajeConductor !== null 
-    ? Number(porcentajeConductor) 
-    : 1.00;
-
-  if (Number.isNaN(pct) || pct < 0 || pct > 100) {
-    throw new Error('El porcentaje del conductor debe estar entre 0% y 100%');
-  }
-  
-  // Fórmula de comisión redondeada a 2 decimales para evitar residuos IEEE 754
-  const valorConductor = Math.round(valorPago * (pct / 100) * 100) / 100;
-  
-  return { pct, valorConductor };
-};
-
-/**
- * Procesa y formatea los datos de actualización del viaje para asegurar consistencia
- * de tipos en base de datos. Modifica el objeto dataToUpdate mutando tipos requeridos.
- * 
- * @param {Object} dataToUpdate - Objeto con los datos que se actualizarán.
- */
-const parseUpdateFields = (dataToUpdate) => {
-  // Asegura formato de fecha si se provee una nueva fecha
-  if (dataToUpdate.fecha) {
-    dataToUpdate.fecha = new Date(dataToUpdate.fecha);
-  }
-
-  // Castings numéricos rigurosos para campos opcionales del request
-  if (dataToUpdate.ticket !== undefined) {
-    dataToUpdate.ticket = Number(dataToUpdate.ticket);
-  }
-  
-  if (dataToUpdate.valorPago !== undefined && dataToUpdate.valorPago !== null) {
-    dataToUpdate.valorPago = Number(dataToUpdate.valorPago);
-  }
-  
-  if (dataToUpdate.porcentajeConductor !== undefined && dataToUpdate.porcentajeConductor !== null) {
-    dataToUpdate.porcentajeConductor = Number(dataToUpdate.porcentajeConductor);
-  }
-  
-  if (dataToUpdate.consumoAcpm !== undefined && dataToUpdate.consumoAcpm !== null) {
-    dataToUpdate.consumoAcpm = Number(dataToUpdate.consumoAcpm);
-  }
-
-  if (dataToUpdate.valorAcpm !== undefined && dataToUpdate.valorAcpm !== null) {
-    dataToUpdate.valorAcpm = Number(dataToUpdate.valorAcpm);
-  }
-  
-  if (dataToUpdate.valorFerry !== undefined && dataToUpdate.valorFerry !== null) {
-    dataToUpdate.valorFerry = Number(dataToUpdate.valorFerry);
-  }
-};
-
-/**
  * ============================================================================
  * SERVICIO CORE DE VIAJES (TRIP SERVICE)
  * ============================================================================
@@ -153,17 +96,7 @@ export const createTrip = async (tripData, userId, auditMeta = {}) => {
     const { pct, valorConductor } = calculateConductorPay(valorPago, tripData.porcentajeConductor);
 
     // 5. Normalizar coherencia entre flags de uso (ACPM / Ferry) y sus importes asociados
-    const usoAcpm = Boolean(tripData.usoAcpm);
-    const usoFerry = Boolean(tripData.usoFerry);
-    const consumoAcpm = usoAcpm && tripData.consumoAcpm !== undefined && tripData.consumoAcpm !== null
-      ? Number(tripData.consumoAcpm)
-      : 0;
-    const valorAcpm = usoAcpm && tripData.valorAcpm !== undefined && tripData.valorAcpm !== null
-      ? Number(tripData.valorAcpm)
-      : 0.00;
-    const valorFerry = usoFerry && tripData.valorFerry !== undefined && tripData.valorFerry !== null
-      ? Number(tripData.valorFerry)
-      : 0.00;
+    const { usoAcpm, usoFerry, consumoAcpm, valorAcpm, valorFerry } = normalizeTripCosts(tripData);
 
     // 6. Crear el registro del viaje en la base de datos
     const newTrip = await tx.trip.create({
@@ -252,32 +185,7 @@ export const getAllTrips = async () => {
  * @returns {Promise<{ data: Array, pagination: Object }>}
  */
 export const getTripsPaginated = async ({ page = 1, limit = 15, search = '' } = {}) => {
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 15));
-  const skip = (pageNum - 1) * limitNum;
-
-  const where = {
-    deletedAt: null
-  };
-
-  if (search && typeof search === 'string' && search.trim() !== '') {
-    const s = search.trim();
-    const ticketNum = parseInt(s, 10);
-    const orConditions = [
-      { origen: { contains: s, mode: 'insensitive' } },
-      { destino: { contains: s, mode: 'insensitive' } },
-      { empresa: { contains: s, mode: 'insensitive' } },
-      { driver: { primerNombre: { contains: s, mode: 'insensitive' } } },
-      { driver: { primerApellido: { contains: s, mode: 'insensitive' } } },
-      { vehicle: { placa: { contains: s, mode: 'insensitive' } } }
-    ];
-
-    if (!isNaN(ticketNum)) {
-      orConditions.push({ ticket: ticketNum });
-    }
-
-    where.OR = orConditions;
-  }
+  const { pageNum, limitNum, skip, where } = buildTripsPaginationQuery({ page, limit, search });
 
   const [total, trips] = await Promise.all([
     prisma.trip.count({ where }),

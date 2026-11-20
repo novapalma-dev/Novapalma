@@ -79,6 +79,7 @@ const loginLimiter = rateLimit({
   message: 'Demasiados intentos de inicio de sesión desde esta IP. Por favor intente de nuevo en 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 // Limitador general para el resto de la API (Navegación y consultas)
@@ -88,6 +89,7 @@ const apiLimiter = rateLimit({
   message: 'Demasiadas solicitudes desde esta IP, por favor intente más tarde (Límite temporal de 1 minuto activo).',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 // Aplicar políticas por endpoints
