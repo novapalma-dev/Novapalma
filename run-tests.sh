@@ -16,8 +16,14 @@ case "$MODE" in
     ;;
   integration:db)
     echo "🐘 Ejecutando Pruebas de Integración contra PostgreSQL Real..."
-    DATABASE_URL="${DATABASE_URL_TEST:-postgresql://postgres:postgres@localhost:5433/novapalma?schema=public}" \
+    if [ -n "${DATABASE_URL_TEST:-}" ]; then
+      DATABASE_URL="$DATABASE_URL_TEST" npm --prefix "$ROOT_DIR/server" run test:integration:db
+    elif [ -f "$ROOT_DIR/server/.env" ] && grep -q '^DATABASE_URL=' "$ROOT_DIR/server/.env"; then
       npm --prefix "$ROOT_DIR/server" run test:integration:db
+    else
+      DATABASE_URL="postgresql://postgres:postgres@localhost:5433/novapalma?schema=public" \
+        npm --prefix "$ROOT_DIR/server" run test:integration:db
+    fi
     ;;
   cov)
     echo "📊 Ejecutando Suite Completa con Code Coverage (Quality Gate >= 60%)..."
