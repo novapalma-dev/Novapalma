@@ -21,6 +21,10 @@
 
 ## Sesiones Recientes
 
+* **Noviembre 2026 — Suite de Pruebas Automatizadas, Design for Testability y Quality Gate (Coverage ≥ 60%):**
+  * **Design for Testability:** Extracción de lógica pura a `server/src/utils/tripCalculations.js`, `financeCalculations.js` y `dateRange.js` (Backend) y `client/src/utils/tripFormUtils.js` y `financeUtils.js` (Frontend). Bypass de `express-rate-limit` en `NODE_ENV === 'test'`.
+  * **Pirámide de Pruebas (Vitest + Supertest):** 64 pruebas unitarias Backend (puras, 6 esquemas Zod, middlewares y servicios core con Mocks Stub + Spy sobre `prisma`/`tx` y `auditService.logAudit`), 11 pruebas unitarias Frontend, 10 pruebas de integración HTTP (`http-routes.test.js`) y suite de integración contra PostgreSQL real (`db.integration.test.js`).
+  * **Cobertura y Automatización:** Quality Gate ≥ 60% superado (**85.36% líneas / 79.66% ramas en Backend**; **97.91% líneas en Frontend utils**), script unificado `./run-tests.sh`, skill `.agents/skills/novapalma-testing/SKILL.md` y documentación en `TESTING.md`.
 * **Octubre 2026 — Remediación y Hardening de Seguridad de Backend (C1–C7):**
   * **C1/C2:** Mitigación de Mass Assignment en middleware Zod (`req.body = schema.parse(...)`), esquemas con `.strict()` en viajes, vehículos, conductores, tarifas y usuarios. Separación del endpoint de autoservicio de perfil (`updateOwnProfile`) desacoplado de privilegios de administrador.
   * **C3:** Verificación estricta de token con `HS256`, consulta de usuario y rol fresco desde BD en cada petición autenticada, y revocación automática de sesiones ante cambios de rol, desactivación de cuenta o actualización de credenciales.
